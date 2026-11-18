@@ -1,4 +1,79 @@
-# Three-bit key-alternating cipher mixing times
+# Pairwise mixing of small key-alternating ciphers
+
+These experiments study problem 4 for pairs of distinct inputs. They use the
+same public permutation P in every round and a fresh uniform XOR key shared by
+the pair. The three-bit results cover every permutation. The four-bit results
+estimate the population mixing fraction and measure the diversity of rates
+using a reproducible uniform sample.
+
+## Four-bit sample
+
+```sh
+uv run --locked --extra four-bit sample_four_bit.py
+uv run --locked python verify_rate_bins.py --scale 100000
+uv run --locked --extra four-bit python -m unittest discover -s tests -v
+```
+
+The default run shuffles a fresh list of the 16 images for each of 10,000 draws
+with replacement, using seed 20261118. Change `--samples`, `--seed`,
+`--profile-rounds`, and `--output-dir` to run another experiment. Each
+permutation acts on 15 nonzero differences. Graph reachability and period give
+an exact classification independently of how long the distance curve is recorded.
+
+**9,974 permutations mixed (99.74%), 26 were disconnected, and zero connected
+periodic cases appeared in this sample.** The 95% Wilson interval for the
+mixing fraction is 99.62% to 99.82%. At ε = 1/4 the counts for 3, 4, 5, 6 and 7
+cipher rounds were 2,582, 7,300, 83, 7 and 2. The exhaustive three-bit fraction
+was 80%. [Wilson's interval](https://www.jstor.org/stable/2276774)
+
+Among mixing draws there were **9,957 distinct exact distance curves through
+round 8**. The sample already had 6,978 different curves through round 3 and
+9,924 through round 4. These counts compare the entire sequence of distances
+from round 0 up to the indicated round.
+
+For each mixing permutation, let T be its difference transition matrix, U the
+uniform-row matrix, and d(r) its worst-start total variation distance. The CSV
+reports the numerical spectral radius of T − U. This is the asymptotic factor
+lim d(r)^(1/r), since 2d(r) is the maximum absolute row sum of (T − U)^r
+for r ≥ 1. The median factor was 0.387 and the middle 90% ran from 0.319 to
+0.539. The independent `verify_rate_bins.py` audit certifies **at least 7,798
+distinct asymptotic factors** by finding witnesses in disjoint intervals of
+width 0.00001. Floating-point eigenvalues select candidate intervals. Integer
+characteristic polynomials and exact tests of the moduli of their roots certify
+membership, including roots on interval boundaries.
+
+A secondary concentration of slower rates appears near 0.53. For each nonzero
+four-bit mask h, compare the parity bit h·x with h·P(x), allowing the latter
+to be complemented. The best agreement over all masks was 14 of 16 inputs for
+1,334 mixing permutations. Their median factor was 0.530, compared with 0.378
+for the remaining 8,640. Perfect agreement on all 16 inputs preserves the
+partition into the two parity classes and forces disconnection. It occurred in
+25 of the 26 disconnected draws.
+
+There is a reason for the location of that second peak. With agreement on 14
+inputs, the two exceptions u and v lie on opposite sides of the parity split,
+since the input and output bits are balanced. For difference u XOR v the bit of
+the difference always survives a round. For every other nonzero difference a,
+exactly four choices of x put just one of x and x XOR a among the exceptions.
+Thus its bit flips with probability 1/4. Starting uniformly in each parity
+class gives the one-step matrix `[[3/4, 1/4], [7/32, 25/32]]` (even, odd).
+Its second eigenvalue is **17/32 = 0.53125**. This explains the scale of the
+peak. The exceptional difference and the other odd differences have different
+flip probabilities, so a single permutation's long-run rate still depends on
+how probability moves within the classes.
+
+- [Sample measurements](results/four_bit/samples.csv) give P(0) through P(15),
+  status, period, numerical rate, best bit agreement, the first difference round
+  at each threshold, and exact worst-start TV fractions at rounds 0 through 8.
+  The cipher requires one additional round at these thresholds. Nonmixing draws
+  have empty rate, time, and distance fields.
+- [Summary](results/four_bit/summary.json) includes the sampling parameters,
+  confidence interval, profile counts, rate quantiles and cipher-round counts
+  for six thresholds from 1/4 to 1/128.
+- [Convergence plot](results/four_bit/convergence.png) shows the spread of the
+  exact distances over the mixing sample and a histogram of its asymptotic rates.
+
+## Three-bit census
 
 This experiment enumerates all 40,320 permutations of three-bit strings for the
 pairwise case (`t = 2`) of problem 4. Each round applies the same public
@@ -7,7 +82,7 @@ both inputs. The measurement is the first round at which **every** ordered pair
 of distinct inputs is within total variation distance ε of uniform on the 56
 ordered pairs of distinct outputs.
 
-## Run
+### Run
 
 ```sh
 uv run --locked mixing.py
@@ -26,7 +101,7 @@ fractions and decimals in the range 0 < ε ≤ 1/2. At those thresholds a
 reducible or periodic seven-state chain always has a starting state whose
 distance exceeds ε. Threshold comparisons use exact fractions.
 
-## Results
+### Results
 
 Of the 40,320 permutations, **32,256 (80%) mix**, 7,680 have disconnected
 difference graphs, and 384 have connected graphs of period seven. For example,
@@ -54,7 +129,7 @@ Both files give a numeric `epsilon` for plotting and an `epsilon_exact` fraction
 for reproducing the cutoff. Empty round counts indicate failure to converge to
 uniform from every start. The period is given for connected chains.
 
-## Calculation
+### Calculation
 
 For nonzero XOR differences a and b, the transition probability is
 
@@ -84,7 +159,7 @@ any constant into all eight outputs cancels in the difference formula. Writing
 all eight translations of each of the 7! representatives covers every labeled
 permutation exactly once per threshold.
 
-## The inverse permutation as a benchmark
+### The inverse permutation as a benchmark
 
 Liu, Tessaro and Vaikuntanathan analyze the patched field inverse (zero maps
 to zero) in Appendix A. Their two-round theorem assumes an even bit length

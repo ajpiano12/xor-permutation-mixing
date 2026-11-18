@@ -1,6 +1,9 @@
 [project]
 name = "three-bit-mixing"
 version = "0.1.0"
-description = "Exhaustive pairwise mixing times for three-bit key-alternating ciphers"
+description = "Pairwise mixing in small key-alternating ciphers"
 requires-python = ">=3.10"
 dependencies = []
+
+[project.optional-dependencies]
+four-bit = ["numpy>=1.24", "matplotlib>=3.7"]

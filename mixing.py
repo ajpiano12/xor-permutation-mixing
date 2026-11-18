@@ -13,19 +13,19 @@ from tempfile import TemporaryDirectory
 
 
 SIZE = 8
-DIFFERENCES = SIZE - 1
 DEFAULT_THRESHOLDS = tuple(Fraction(1, 2**k) for k in range(2, 8))
 Matrix = tuple[tuple[int, ...], ...]
 
 
 def transition_counts(permutation: tuple[int, ...]) -> Matrix:
     """Entry [a-1][b-1] counts keys giving output difference b from a."""
-    if sorted(permutation) != list(range(SIZE)):
-        raise ValueError("expected a permutation of 0 through 7")
+    size = len(permutation)
+    if size < 4 or size & (size - 1) or sorted(permutation) != list(range(size)):
+        raise ValueError("expected a permutation of a power-of-two domain of size at least four")
     rows = []
-    for a in range(1, SIZE):
-        counts = [0] * DIFFERENCES
-        for u in range(SIZE):
+    for a in range(1, size):
+        counts = [0] * (size - 1)
+        for u in range(size):
             b = permutation[u] ^ permutation[u ^ a]
             counts[b - 1] += 1
         rows.append(tuple(counts))
@@ -45,7 +45,7 @@ def chain_period(matrix: Matrix) -> int | None:
                 queue.append(v)
     # Equal incoming and outgoing weight at every vertex makes every
     # communicating class closed. One forward search detects irreducibility.
-    if len(depth) < DIFFERENCES:
+    if len(depth) < len(matrix):
         return None
     # The gcd of these edge discrepancies equals the gcd of cycle lengths.
     period = 0
@@ -60,14 +60,36 @@ class MixingResult:
     status: str
     period: int | None
     difference_rounds: tuple[int | None, ...]
+    distances: tuple[Fraction, ...] = ()
 
     @property
     def pair_rounds(self) -> tuple[int | None, ...]:
         return tuple(None if r is None else r + 1 for r in self.difference_rounds)
 
 
-def analyze(matrix: Matrix, thresholds: tuple[Fraction, ...]) -> MixingResult:
-    """First round at or below each threshold, in the caller's order."""
+def difference_distances(matrix: Matrix):
+    """Yield exact worst-start TV at rounds 0, 1, ... using integer counts."""
+    states = len(matrix)
+    keys = states + 1
+    yield Fraction(states - 1, states)
+    power = matrix
+    columns = tuple(zip(*matrix))
+    key_sequences = keys
+    while True:
+        deviation = max(
+            sum(abs(states * count - key_sequences) for count in row)
+            for row in power
+        )
+        yield Fraction(deviation, 2 * states * key_sequences)
+        power = tuple(
+            tuple(sum(map(mul, row, column)) for column in columns)
+            for row in power
+        )
+        key_sequences *= keys
+
+
+def analyze(matrix: Matrix, thresholds: tuple[Fraction, ...], profile_rounds: int = -1) -> MixingResult:
+    """Find threshold crossing times and optionally retain TV through profile_rounds."""
     if not thresholds or any(e <= 0 or 2 * e > 1 for e in thresholds):
         raise ValueError("supply total variation thresholds in (0, 1/2]")
     period = chain_period(matrix)
@@ -75,30 +97,17 @@ def analyze(matrix: Matrix, thresholds: tuple[Fraction, ...]) -> MixingResult:
         status = "disconnected" if period is None else "periodic"
         return MixingResult(status, period, (None,) * len(thresholds))
 
-    # The row distribution after r steps is a row of matrix**r / 8**r.
-    # The initial TV is 6/7, above every supported threshold.
-    power = matrix
-    columns = tuple(zip(*matrix))
-    rounds = 1
-    key_sequences = SIZE
     remaining = sorted(set(thresholds))  # easiest threshold at the end
     first_round = {}
-    while remaining:
-        deviation = max(
-            sum(abs(DIFFERENCES * count - key_sequences) for count in row)
-            for row in power
-        )
-        worst_tv = Fraction(deviation, 2 * DIFFERENCES * key_sequences)
+    distances = []
+    for rounds, worst_tv in enumerate(difference_distances(matrix)):
+        if rounds <= profile_rounds:
+            distances.append(worst_tv)
         while remaining and worst_tv <= remaining[-1]:
             first_round[remaining.pop()] = rounds
-        if remaining:
-            power = tuple(
-                tuple(sum(map(mul, row, column)) for column in columns)
-                for row in power
-            )
-            key_sequences *= SIZE
-            rounds += 1
-    return MixingResult("mixing", period, tuple(first_round[e] for e in thresholds))
+        if not remaining and rounds >= profile_rounds:
+            break
+    return MixingResult("mixing", period, tuple(first_round[e] for e in thresholds), tuple(distances))
 
 
 def census(thresholds: tuple[Fraction, ...], output_dir: Path) -> Counter:
