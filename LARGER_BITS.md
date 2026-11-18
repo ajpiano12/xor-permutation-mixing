@@ -101,3 +101,63 @@ equivalent to having a single orbit. Uniform is stationary for each individual
 round, so convergence along the block endpoints also gives convergence at every
 round. For pairs, $T\subseteq H$ ensures that the orbits are unions of whole
 difference fibers, giving the same criterion for the difference chain.
+
+## Deciding pairwise mixing from a truth table
+
+Write $N=2^n$ and $D=\{1,\ldots,N-1\}$. For every $x$, the map
+$R_x(a)=P(x)\oplus P(x\oplus a)$ permutes $D$. The transition rule on
+differences is the uniform average of these permutations. Consequently the
+chain is doubly stochastic, uniform is stationary, and each weak component of
+the directed support graph is strongly connected. For the last claim, a sink
+component has zero flow leaving it and therefore zero flow entering it. Remove
+it and repeat on the other components.
+
+**Exact characterization.** Failure to converge from every start is equivalent
+to at least one of the following conditions.
+
+- Some nonempty proper subset of $D$ contains $R_x(a)$ for every member $a$
+  and every $x$.
+- There is a partition into $d>1$ nonempty classes such that every $R_x$
+  advances the class of its argument by one modulo $d$.
+
+The first condition describes disconnection. If the graph is connected, the
+second is precisely periodicity. In the remaining case the finite chain is
+irreducible and aperiodic and its powers converge to uniform. [Jarvis and
+Shier, *Graph-Theoretic Analysis of Finite Markov Chains*, section 17.3](https://cecas.clemson.edu/~shierd/Shier/markov.pdf)
+
+**Algorithm.** Start a breadth-first search at difference 1, generating
+successors on demand. For each reached $a$, it suffices to visit each unordered
+pair $\{x,x\oplus a\}$ once. Keep the search depth $h(a)$ and the running gcd
+of the integers $h(a)+1-h(b)$ over encountered edges $a\to b$. Tree edges
+contribute zero.
+
+If the queue empties before all states are found, the reached states form a
+proper closed set. Otherwise the full graph is strongly connected. Its period
+equals that gcd. To prove this, the sum of the edge expressions around a cycle
+telescopes to the cycle length, so the gcd divides every cycle length.
+Conversely, for each edge $a\to b$, choose any path from $b$ back to the root.
+The tree path to $a$ followed by this edge and the return path is a closed walk.
+So is the tree path to $b$ followed by the same return path. The period divides
+both lengths, hence divides their difference $h(a)+1-h(b)$.
+
+This supplies witnesses as well as a decision. If the period $d>1$, the
+classes are $h(a)\bmod d$. Once every state has been discovered and the running
+gcd reaches one, the decision is already mixing. Additional edges preserve
+reachability, and their gcd with one remains one.
+
+There are $N-1$ possible rows and $N/2$ unordered pairs in each. The search
+uses $O(N^2)$ worst-case word operations and $O(N)$ words of storage, with
+$O(n)$-bit words. A nonzero running gcd can strictly decrease only
+$O(\log N)$ times, and unchanged updates take a constant number of word
+remainders. This keeps the total cost quadratic. The implementation also
+tests affineness in one pass by inductively reconstructing the normalized
+linear map from its basis images. For an affine input it follows just the
+single successor in each reached row.
+
+For a **fixed** tuple order $t$, the same graph method extends by storing the
+$t-1$ differences from the first input. These are ordered, distinct and nonzero,
+so there are $M=(N-1)(N-2)\cdots(N-t+1)$ states. Each $x$ applies the same
+$R_x$ to every coordinate. Scanning the transitions costs $O(tNM)$ time,
+polynomial in the truth-table length for fixed $t$. A fresh common XOR key
+uniformizes the first coordinate conditional on the difference tuple, giving
+the corresponding ordered-output guarantee one cipher round later.

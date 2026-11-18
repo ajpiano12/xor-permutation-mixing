@@ -2,14 +2,15 @@
 
 import argparse
 import csv
-from collections import Counter, deque
+from collections import Counter
 from dataclasses import dataclass
 from fractions import Fraction
 from itertools import permutations
-from math import gcd
 from operator import mul
 from pathlib import Path
 from tempfile import TemporaryDirectory
+
+from classify_mixing import classify_support
 
 
 SIZE = 8
@@ -34,25 +35,10 @@ def transition_counts(permutation: tuple[int, ...]) -> Matrix:
 
 def chain_period(matrix: Matrix) -> int | None:
     """Return the period, or None if the difference graph is disconnected."""
-    neighbors = [[v for v, count in enumerate(row) if count] for row in matrix]
-    depth = {0: 0}
-    queue = deque([0])
-    while queue:
-        u = queue.popleft()
-        for v in neighbors[u]:
-            if v not in depth:
-                depth[v] = depth[u] + 1
-                queue.append(v)
-    # Equal incoming and outgoing weight at every vertex makes every
-    # communicating class closed. One forward search detects irreducibility.
-    if len(depth) < len(matrix):
-        return None
-    # The gcd of these edge discrepancies equals the gcd of cycle lengths.
-    period = 0
-    for u, successors in enumerate(neighbors):
-        for v in successors:
-            period = gcd(period, depth[u] + 1 - depth[v])
-    return period
+    def successors(a):
+        return (b for b, count in enumerate(matrix[a - 1], start=1) if count)
+
+    return classify_support(len(matrix), successors).period
 
 
 @dataclass(frozen=True)

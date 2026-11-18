@@ -6,6 +6,33 @@ the pair. We count mixing and nonmixing permutations exactly for three and four
 bits. We measure convergence rates exhaustively at three bits and by sampling
 at four bits.
 
+## Decide whether one permutation mixes
+
+Given a truth table in the order P(0), P(1), …, [the classifier](classify_mixing.py)
+decides pairwise mixing exactly for any positive bit length. It accepts decimal
+or `0x` integers separated by spaces, commas or newlines, and infers the bit
+length from the number of images.
+
+```sh
+uv run --locked classify_mixing.py 0 1 5 6 7 2 3 4
+uv run --locked classify_mixing.py --witness 0 2 4 6 3 1 7 5
+uv run --locked classify_mixing.py --file permutation.txt
+```
+
+The first example mixes. The second gives a connected chain of period seven,
+and its witness lists the seven classes in cyclic order. On disconnected inputs,
+`--witness` gives a nonempty proper set of differences closed under every key.
+Use `--file -` to read standard input. The Python function `classify(images)`
+returns the same decision and witnesses.
+
+For $N=2^n$ table entries, the deterministic worst-case bounds are $O(N^2)$ time
+and $O(N)$ words of memory. Affine permutations take $O(N)$ time. The proof also
+explains when the search can stop early. [Decision theorem](LARGER_BITS.md#deciding-pairwise-mixing-from-a-truth-table)
+
+For a succinct Boolean permutation circuit, an exact decision is NP-hard.
+For black-box access, $N-1$ queries are necessary in the deterministic worst
+case for $n\ge3$. [Proofs for circuit and oracle inputs](CIRCUIT_INPUT.md)
+
 ## Exact four-bit count
 
 Exactly **20,873,902,694,400 of the 16! permutations mix**, a fraction of
