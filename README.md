@@ -33,6 +33,79 @@ For a succinct Boolean permutation circuit, an exact decision is NP-hard.
 For black-box access, $N-1$ queries are necessary in the deterministic worst
 case for $n\ge3$. [Proofs for circuit and oracle inputs](CIRCUIT_INPUT.md)
 
+## Faster decisions for a single table
+
+The randomized filter takes the same inputs as the exact classifier.
+
+```sh
+uv run --locked fast_mixing.py --error-bits 32 --file permutation.txt
+uv run --locked fast_mixing.py --exact --file permutation.txt
+```
+
+**Every `mixing` result is exact.** All nonmixers return `unresolved` in filter
+mode. For each fixed mixing permutation, the probability of `unresolved` is
+at most $2^{-32}$ with the first command, over the filter's fresh random choices.
+The filter first tests the transitions induced by just three sampled first
+inputs. When they leave the answer open, Walsh–Hadamard transforms search
+many differences simultaneously for edges that join components or break a
+proposed period. With $N=2^n$ entries and error budget $\varepsilon$, the
+worst-case cost is $O(N n^4\log(Nn/\varepsilon))$ word operations and $O(N)$
+words. The proof gives the word width and constants. `--exact` checks
+unresolved tables for an invariant parity and uses the deterministic
+classifier if needed, with quadratic worst-case time for fixed error budget.
+[Algorithm and proof](FAST_TABLE_PROOF.md) · [Python implementation](fast_mixing.py)
+
+In a seeded check, the filter certified all 32,256 mixers in the three-bit
+census and all 9,974 mixers in the four-bit sample. The 8,064 and 26
+nonmixers, respectively, returned `unresolved`.
+
+The deterministic classifier also has a native multicore implementation.
+Build it with a C compiler that supports OpenMP. It accepts up to 32-bit table
+entries and can print a closed set or cyclic classes on failure.
+
+```sh
+cc -O3 -std=c11 -fopenmp parallel_mixing.c -o /tmp/parallel_mixing
+/tmp/parallel_mixing -j 8 --witness --file permutation.txt
+```
+
+Workers scan different rows of the same breadth-first-search level and merge
+their successor bitsets. All those rows start at the same depth, so merging
+preserves the period computation. The worst-case row work is still quadratic.
+With $T$ workers the scratch bitsets take $T\lceil N/64\rceil$ 64-bit words
+in addition to the table, depths and queue. The timings below include file
+parsing and are medians of five runs on an Intel Core i9-13900H. The
+15-bit table shuffles each high-bit half independently. The 18-bit table is
+one uniformly shuffled permutation. [Native implementation](parallel_mixing.c)
+
+| Fixed input | 1 thread | 2 threads | 4 threads | 8 threads |
+| --- | ---: | ---: | ---: | ---: |
+| 15-bit disconnected | 2.292 s | 1.156 s | 0.587 s | 0.363 s |
+| 18-bit mixing | 0.088 s | 0.073 s | 0.062 s | 0.114 s |
+
+## When the table is too large
+
+The parity screen accepts a callable that maps an integer block to an integer
+block. Fix the key if the callable implements a keyed block cipher. The
+budget helper and screen can be used directly from Python.
+
+```python
+from parity_screen import parity_query_budget, screen_parity
+
+# encrypt_block(x) evaluates the same fixed 128-bit permutation on every call.
+budget = parity_query_budget(128, delta=0.01, epsilon=0.01)
+result = screen_parity(128, encrypt_block, budget=budget)
+```
+
+A nonzero mask in an exhaustive result certifies disconnection. With a query
+budget, `candidate` returns the basis of masks consistent with the samples.
+`no_witness` proves that this particular family of obstructions is absent.
+The 128-bit example takes at most 9,334 evaluations. With probability at least
+99%, every surviving parity equation holds on more than 99% of all inputs.
+A circuit proof can verify whether a surviving equation holds everywhere.
+The exhaustive screen caught 7,232 of the 8,064 three-bit nonmixers and 25 of
+the 26 nonmixers in the four-bit sample. [Parity screen](parity_screen.py) ·
+[Guarantee and circuit verification](CIRCUIT_INPUT.md#screening-for-invariant-parities)
+
 ## Exact four-bit count
 
 Exactly **20,873,902,694,400 of the 16! permutations mix**, a fraction of
