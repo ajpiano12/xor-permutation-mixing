@@ -2,9 +2,27 @@
 
 These experiments study problem 4 for pairs of distinct inputs. They use the
 same public permutation P in every round and a fresh uniform XOR key shared by
-the pair. The three-bit results cover every permutation. The four-bit results
-estimate the population mixing fraction and measure the diversity of rates
-using a reproducible uniform sample.
+the pair. We count mixing and nonmixing permutations exactly for three and four
+bits. We measure convergence rates exhaustively at three bits and by sampling
+at four bits.
+
+## Exact four-bit count
+
+Exactly **20,873,902,694,400 of the 16! permutations mix**, a fraction of
+**179,759/180,180 (99.766345%)**. There are 48,887,150,592 disconnected cases
+and 43,008 connected periodic cases, all with period 15.
+
+A four-bit permutation fails to mix precisely when it is affine or maps the
+cosets of some proper nonzero binary subspace to cosets of that same subspace.
+A disconnected or periodic chain can therefore be recognized directly from the
+16 images. The [counting argument](FOUR_BIT_COUNT.md) explains why the test is
+exhaustive, how to avoid double counting, and why the fraction changes so much
+between three and four bits.
+
+```sh
+uv run --locked --extra four-bit exact_four_bit.py
+uv run --locked --extra four-bit exact_four_bit.py --bits 3
+```
 
 ## Four-bit sample
 
