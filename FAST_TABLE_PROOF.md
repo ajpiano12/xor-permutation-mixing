@@ -18,6 +18,12 @@ the unresolved inputs for an exact decision. In the last mode the worst-case
 fallback still takes quadratic time. The guarantee addresses classification
 and places no bound on the mixing time.
 
+For an **exact** answer on a fixed mixing table, set
+$\varepsilon\le 1/N$ and enable the deterministic fallback. Its expected
+contribution is then at most $\varepsilon\,O(N^2)=O(N)$, so the overall
+expected time is nearly linear on every mixer. Nonmixers always reach the
+fallback and can still require quadratic time.
+
 ## What suffices to certify mixing
 
 An ordered pair of table inputs $(x,y)$ gives a directed edge
