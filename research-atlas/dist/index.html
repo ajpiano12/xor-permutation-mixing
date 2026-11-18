@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#122f35">
+  <meta name="description" content="Explore the proofs, experiments, and open questions behind pairwise mixing of key-alternating permutations.">
+  <title>Difference Atlas · Pairwise mixing</title>
+  <link rel="icon" href="mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+  <script src="data.js" defer></script><script src="app.js" defer></script><script src="cycle.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#workspace">Skip to research</a>
+  <header class="masthead">
+    <div class="topline wrap">
+      <a class="wordmark" href="#map" aria-label="Difference Atlas, research map"><img src="mark.svg" alt="" width="35" height="35">Difference Atlas</a>
+      <nav aria-label="Notebook views">
+        <a data-view="map" href="#map" aria-current="page"><svg viewBox="0 0 20 20"><path d="M5 5v10m0-6h9m-9 6h9"/><circle cx="5" cy="4" r="2"/><circle cx="15" cy="9" r="2"/><circle cx="15" cy="15" r="2"/></svg>Research map</a>
+        <a data-view="library" href="#library"><svg viewBox="0 0 20 20"><path d="M3 4h4v12H3zM9 4h3v12H9zM13.5 5l3-1 3 11-3 1z"/></svg>Proof library</a>
+        <a data-view="progress" href="#progress"><svg viewBox="0 0 20 20"><path d="M2.5 15.5h15m-13-3 4-5 3 3 5-7"/></svg>Progress</a>
+      </nav>
+    </div>
+  </header>
+  <main id="workspace" class="wrap" tabindex="-1">
+    <section class="hero" aria-labelledby="project-title">
+      <div class="hero-copy">
+        <p class="eyebrow hero-eyebrow"><span class="chapter-rule"></span>Cryptography notebook</p>
+        <h1 id="project-title">Pairwise mixing</h1>
+        <p class="lede">Which permutations make pairs of inputs approach uniform randomness under repeated XOR-keyed rounds?</p>
+        <div class="model-note"><span>t = 2</span><i></i>Fixed permutation<i></i>Fresh key each round</div>
+      </div>
+      <figure class="cycle-figure">
+        <div class="graph-head"><span class="diagram-key"></span>Three-bit difference walk</div>
+        <svg id="cycle-graph" viewBox="0 0 330 166" role="img" aria-label="Seven binary differences on a directed cycle of period seven"></svg>
+        <figcaption><span id="cycle-readout" aria-live="polite">Round 0 · difference 001</span><button id="step-cycle" type="button" aria-label="Advance the illustrated walk by one round">Step round <svg viewBox="0 0 16 16"><path d="m5 4 5 4-5 4zM12 4v8"/></svg></button></figcaption>
+      </figure>
+    </section>
+    <section id="app-map" class="view-pane" aria-labelledby="map-title">
+      <header class="view-header"><div><h2 id="map-title">Research map</h2><p>Follow a branch from the question to its evidence.</p></div>
+        <div class="map-tools"><label class="search-field"><svg viewBox="0 0 20 20"><circle cx="8.5" cy="8.5" r="5.6"/><path d="m13 13 4 4"/></svg><span class="sr-only">Search research topics</span><input id="search" type="search" placeholder="Find a topic" autocomplete="off"></label>
+        <label class="select-field"><svg viewBox="0 0 20 20"><path d="M2.5 6h15m-12 4h9m-6 4h3"/></svg><span class="sr-only">Filter by status</span><select id="filter"><option value="">All statuses</option></select></label></div>
+      </header>
+      <div class="map-layout"><section class="map-sheet" aria-label="Branching research topics"><div id="tree"></div></section><aside id="inspector" tabindex="-1" aria-label="Selected research topic"></aside></div>
+    </section>
+    <section id="app-library" class="view-pane" hidden aria-labelledby="library-title"><header class="view-header"><div><h2 id="library-title">Proof library</h2><p>Read the derivations, inspect the evidence, or trace a result to its published source.</p></div></header><div id="library-list"></div></section>
+    <section id="app-progress" class="view-pane" hidden aria-labelledby="progress-title"><header class="view-header"><div><h2 id="progress-title">Research progress</h2><p>See which questions have proofs, implementations, or measurements, and which remain open.</p></div></header><div id="progress-list"></div></section>
+    <noscript>Enable JavaScript to explore the map. <a href="library/readme.html">Browse research files</a>.</noscript>
+  </main>
+  <footer class="wrap footer"><span>Difference Atlas</span><span id="review-date">Research notebook</span></footer>
+</body></html>

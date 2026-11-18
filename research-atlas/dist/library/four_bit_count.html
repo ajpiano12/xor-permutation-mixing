@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#122f35"><title>Which four-bit permutations mix? · Difference Atlas</title>
+<link rel="icon" href="../mark.svg"><link rel="stylesheet" href="../reader.css"></head>
+<body><a class="skip" href="#document">Skip to document</a><header><div class="bar">
+<a class="brand" href="../index.html#map"><img src="../mark.svg" width="33" height="33" alt="">Difference Atlas</a>
+<nav aria-label="Atlas"><a href="../index.html#map">Research map</a><a href="../index.html#library">Proof library</a></nav>
+</div></header><div class="layout"><aside><div class="meta">Research note</div>
+<p class="filename">FOUR_BIT_COUNT.md</p><a download="FOUR_BIT_COUNT.md" href="raw/FOUR_BIT_COUNT.md">Download source</a><nav class="toc" aria-label="Sections"><h2>On this page</h2><ul><li><a href="#a-test-on-the-16-images">A test on the 16 images</a></li><li><a href="#why-the-fraction-changes">Why the fraction changes</a></li><li><a href="#counting-the-disjoint-failure-families">Counting the disjoint failure families</a></li><li><a href="#how-the-graph-count-checks-exhaustiveness">How the graph count checks exhaustiveness</a></li></ul></nav></aside>
+<main id="document" tabindex="-1"><h1 id="which-four-bit-permutations-mix">Which four-bit permutations mix?</h1>
+<p>Let D be the 15 nonzero XOR differences. Each round applies the same P after a fresh uniform XOR key. We ask whether, from every starting difference, the distribution converges to uniform on D. This is equivalent to pairwise mixing of the cipher. The extra cipher round needed to convert a difference distance to an ordered-pair distance has no effect on whether convergence occurs.</p>
+<table>
+<thead>
+<tr>
+<th>Outcome</th>
+<th style="text-align: right;">Labeled permutations</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Mixes</td>
+<td style="text-align: right;">20,873,902,694,400</td>
+</tr>
+<tr>
+<td>Disconnected</td>
+<td style="text-align: right;">48,887,150,592</td>
+</tr>
+<tr>
+<td>Connected, period 15</td>
+<td style="text-align: right;">43,008</td>
+</tr>
+<tr>
+<td>Total</td>
+<td style="text-align: right;">20,922,789,888,000</td>
+</tr>
+</tbody>
+</table>
+<p>The exact mixing fraction is <strong>179,759/180,180</strong>. The failure fraction is <strong>421/180,180</strong>. Two descriptions give the same counts. The structural test recognizes individual failures and the graph enumeration establishes that these families exhaust the possibilities.</p>
+<h2 id="a-test-on-the-16-images">A test on the 16 images</h2>
+<ol type="1">
+<li>If P is affine, P(x) = Ax ⊕ c, the difference after one round is always Aa. The difference walks around one cycle deterministically. A single 15-cycle gives the connected periodic cases. Several cycles give disconnection.</li>
+<li>Check each of the 15 lines, 35 planes and 15 hyperplanes W of F₂⁴. The cosets of W are preserved as a partition exactly when P(x ⊕ w) ⊕ P(x) belongs to W for every x and w in W. This traps every nonzero starting difference in W inside W forever. P may permute the cosets.</li>
+<li>Every remaining four-bit permutation mixes. The same criterion holds at five bits, and a six-bit counterexample shows its limit. <a href="larger_bits.html">Proofs for larger dimensions</a></li>
+</ol>
+<p><code>find_obstruction(P)</code> returns a subspace witness, an affine order, or <code>None</code> for a mixing permutation. <a href="four_bit_obstructions.py.html">Implementation</a></p>
+<h2 id="why-the-fraction-changes">Why the fraction changes</h2>
+<p>For a fixed nonzero parity h, write H for the inputs where h·x = 0. Its image under a random permutation of N points is a uniform subset of size N/2. Precisely two images, H and its complement, preserve this parity split.</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th style="text-align: right;">3 bits</th>
+<th style="text-align: right;">4 bits</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Number of parity splits</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">15</td>
+</tr>
+<tr>
+<td>Probability of preserving a specified split</td>
+<td style="text-align: right;">2/70 = 1/35</td>
+<td style="text-align: right;">2/12,870 = 1/6,435</td>
+</tr>
+<tr>
+<td>Probability of preserving at least one split, with overlaps removed</td>
+<td style="text-align: right;">17.936508%</td>
+<td style="text-align: right;">0.232657%</td>
+</tr>
+<tr>
+<td>Probability of any failure to mix</td>
+<td style="text-align: right;">20%</td>
+<td style="text-align: right;">0.233655%</td>
+</tr>
+</tbody>
+</table>
+<p>Doubling the number of points makes a particular parity obstruction about 184 times rarer. The number of candidate parities only grows from 7 to 15. These obstructions account for about 99.57% of all four-bit failures.</p>
+<p>The convergence curves also gain freedom. Every coordinate of a three-bit permutation takes the value one four times. Its cubic coefficient, the XOR of all eight truth-table values, vanishes. Each coordinate therefore has degree at most two, and its derivative in a fixed direction is affine. Each transition row is uniform on an affine subspace of size 1, 2 or 4. At four bits cubic coordinates can occur, and their quadratic derivatives can give different probabilities to different successors in the same row. All 10,000 permutations in the saved sample had degree three and at least one such row. This explains a constraint that disappears at four bits. The exact three-bit curve count also depends on the alignment of successive rows.</p>
+<h2 id="counting-the-disjoint-failure-families">Counting the disjoint failure families</h2>
+<p>XORing a constant into all outputs preserves differences. Work with P(0) = 0 and restore the 16 possible output translations at the end. The following table gives full counts and assigns any overlap to the earliest applicable row.</p>
+<table>
+<thead>
+<tr>
+<th>First obstruction</th>
+<th style="text-align: right;">Permutations</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Invariant hyperplane partition</td>
+<td style="text-align: right;">48,678,419,456</td>
+</tr>
+<tr>
+<td>Invariant line partition</td>
+<td style="text-align: right;">119,116,800</td>
+</tr>
+<tr>
+<td>Invariant plane partition</td>
+<td style="text-align: right;">89,592,832</td>
+</tr>
+<tr>
+<td>Irreducible affine linear part of order 5</td>
+<td style="text-align: right;">21,504</td>
+</tr>
+<tr>
+<td>Irreducible affine linear part of order 15</td>
+<td style="text-align: right;">43,008</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Hyperplanes.</strong> The masks h satisfying h·P(x) = h·x ⊕ cₕ for every x form a linear space. Fix k independent masks. Their joint values partition the inputs into 2ᵏ equal cells. The induced map on the cells is one translation, and the permutation inside each cell is arbitrary. This gives 2ᵏ ((2ⁿ⁻ᵏ)!)^(2ᵏ) choices of P for a specified k-dimensional mask space. To remove overlaps, count incidences with all k-dimensional mask spaces, working down from k = n. A j-dimensional space contributes exactly as many times as it contains k-dimensional subspaces. The same calculation gives 7,232 parity-preserving permutations at three bits.</p>
+<p><strong>Lines after hyperplanes.</strong> Fix the line generated by the last coordinate. Write a normalized map preserving its pairs as P(y,z) = (Q(y), z ⊕ f(y)), with y a three-bit string and f(0) = 0. Q must preserve no parity, leaving 7! − 7,232/8 = 4,136 choices. Of 128 possible f, precisely eight give a preserved parity involving z. They are f(y) = h·(y ⊕ Q(y)), one for each h, distinct because Q preserves no parity. This leaves 120 choices.</p>
+<p>Two preserved lines would force a preserved hyperplane. In coordinates along their two directions a normalized P has the form (Q(y), z ⊕ f(y)) with both y and z two-bit vectors. Q is linear because every normalized two-bit permutation is linear. A fixed parity of Q is already sufficient. Otherwise I ⊕ Q is invertible. Choose a nonzero linear bit of the two-coordinate f that kills its sole possible quadratic coefficient, leaving a linear function of y. Adding a suitable linear bit of y then makes that bit of z invariant. Thus the line count is 16 × 15 × 4,136 × 120 with no overlap.</p>
+<p><strong>Planes after hyperplanes and lines.</strong> For a fixed invariant plane, let z be the two fiber coordinates and y the two quotient coordinates. Every normalized map has the form (Cy, Mᵧz ⊕ cᵧ). The two choices of C with order three avoid a fixed quotient parity or line. The three free offsets give 4³ choices. The four invertible binary matrices Mᵧ must have no common fixed nonzero vector. This also excludes a common fixed parity because GL(2,2) preserves the nondegenerate alternating form identifying vectors with linear functionals. Inclusion-exclusion on three directions gives 6⁴ − 3·2⁴ + 2 = 1,250 matrix tuples. This yields 160,000 normalized maps per plane.</p>
+<p>Two different preserved planes must be complementary here, since their intersection would otherwise be a preserved line. Preserving their two partitions separately makes P act linearly on both two-bit coordinates. Each restriction has order three. Equivalently, the vector space becomes two-dimensional over F₄ with P acting by multiplication by a root of x²+x+1. Its five F₄-lines are exactly its invariant binary planes. There are |GL(4,2)| / |GL(2,4)| = 112 such maps, all conjugate. Removing four extra counts per map gives 16 × (35 × 160,000 − 4 × 112).</p>
+<p><strong>Remaining affine maps.</strong> A linear map preserving no proper nonzero subspace is multiplication by an element of degree four over F₂. Its order is 5 or 15. In the cyclic group F₁₆* there are four elements of order 5 and eight of order 15. Each four conjugate elements specify one irreducible quartic. The invertible linear maps commuting with any one such multiplication are exactly the 15 nonzero field multiplications. Each quartic therefore contributes 16 × |GL(4,2)| / 15 = 21,504 labeled affine maps.</p>
+<h2 id="how-the-graph-count-checks-exhaustiveness">How the graph count checks exhaustiveness</h2>
+<p>The <a href="exact_four_bit.py.html">exact verifier</a> labels the edge between x and y of the complete graph on the 16 input points by the difference x ⊕ y. A partition of the 15 differences groups these labels into colors. For each partition it counts the permutations fixing zero that preserve every edge color, using backtracking and the orbit-stabilizer formula.</p>
+<p>Such a permutation has every difference transition inside its current color. Its actual component partition therefore refines the proposed partition. Conversely, any union of components is closed. To count a given component partition exactly, subtract the counts for all its strict refinements.</p>
+<p>The search only needs partitions that can arise as the orbits of a color- preserving group fixing zero. Every component partition has this property. Each path of difference transitions lifts to a composition of P and point translations on pairs. A final translation brings the first endpoint back to zero. Start with one color and repeatedly split a cell and take the group orbits. When pursuing a target component partition, splitting along a union of target cells retains its group and cannot refine past the target. Linear changes of basis reduce the search to <strong>43 types</strong> representing <strong>12,537 labeled partitions</strong> at four bits.</p>
+<p>For a connected periodic chain the period divides 15 because the cyclic classes have equal stationary mass. For each divisor 3, 5 and 15 the verifier counts the maps rotating equal-size colors by one step and checks connectivity. These partitions are covered by the same search: a path between states of the same cyclic color has length zero modulo the number of colors and its lift preserves the colors. Each connected chain has a unique unordered cyclic partition for each divisor of its period. Removing the contributions of larger periods leaves zero cases of exact period 3 or 5 and 43,008 of period 15. For period 15 every cyclic class is a singleton, so the successor of a is independent of the input x. Taking P(0) = 0 gives P(x ⊕ a) ⊕ P(x) = P(a) for every x and a, precisely linearity. The component counts and period counts match the five structural families above.</p>
+</main></div></body></html>

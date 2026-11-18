@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#122f35"><title>parity_screen.py · Difference Atlas</title>
+<link rel="icon" href="../mark.svg"><link rel="stylesheet" href="../reader.css"></head>
+<body><a class="skip" href="#document">Skip to document</a><header><div class="bar">
+<a class="brand" href="../index.html#map"><img src="../mark.svg" width="33" height="33" alt="">Difference Atlas</a>
+<nav aria-label="Atlas"><a href="../index.html#map">Research map</a><a href="../index.html#library">Proof library</a></nav>
+</div></header><div class="layout"><aside><div class="meta">Source code</div>
+<p class="filename">parity_screen.py</p><a download="parity_screen.py" href="raw/parity_screen.py">Download source</a></aside>
+<main id="document" tabindex="-1"><h1>parity_screen.py</h1><pre><code>&quot;&quot;&quot;Screen a permutation oracle for a parity preserved up to a constant.&quot;&quot;&quot;
+
+from collections.abc import Callable
+from dataclasses import dataclass
+from math import ceil, log
+from operator import index
+from random import Random, SystemRandom
+from typing import Literal
+
+
+@dataclass(frozen=True)
+class ParityResult:
+    status: Literal[&quot;nonmixing&quot;, &quot;candidate&quot;, &quot;no_witness&quot;]
+    mask_basis: tuple[int, ...]
+    evaluations: int
+
+
+def parity_query_budget(bits: int, delta: float, epsilon: float) -&gt; int:
+    &quot;&quot;&quot;Calls sufficient to reject all delta-far masks with error at most epsilon.
+
+    A delta-far mask disagrees with its proposed parity identity on at least
+    a delta fraction of inputs. The returned budget includes the call to P(0)
+    and is capped at the cost of an exhaustive search.
+    &quot;&quot;&quot;
+    if bits &lt; 1 or not 0 &lt; delta &lt;= 1 or not 0 &lt; epsilon &lt; 1:
+        raise ValueError(&quot;require bits &gt;= 1, 0 &lt; delta &lt;= 1, and 0 &lt; epsilon &lt; 1&quot;)
+    size = 1 &lt;&lt; bits
+    draws = (bits * log(2) - log(epsilon)) / delta
+    return size if draws &gt;= size - 1 else 1 + ceil(draws)
+
+
+def screen_parity(
+    bits: int,
+    evaluate: Callable[[int], int],
+    *,
+    budget: int | None = None,
+    rng: Random | None = None,
+) -&gt; ParityResult:
+    &quot;&quot;&quot;Find masks m with m·P(x) = m·x XOR m·P(0), assuming P is a permutation.
+
+    Pass table.__getitem__ for an explicit table or a callable for a circuit.
+    An unlimited budget (default) or a budget &gt;= 2**bits is exhaustive. Smaller
+    budgets include the anchor P(0) and sample nonzero inputs with replacement.
+    &#x27;nonmixing&#x27; certifies the returned masks exactly. &#x27;candidate&#x27; means they
+    passed the sampled inputs. &#x27;no_witness&#x27; rules out this obstruction family.
+    The mask basis represents all surviving masks by their binary span.
+    &quot;&quot;&quot;
+    if bits &lt; 1 or (budget is not None and budget &lt; 1):
+        raise ValueError(&quot;bits and any supplied evaluation budget must be positive&quot;)
+    if bits == 1:
+        # There is only one nonzero difference, so no proper nonempty closed set.
+        return ParityResult(&quot;no_witness&quot;, (), 0)
+    size = 1 &lt;&lt; bits
+    exhaustive = budget is None or budget &gt;= size
+    if exhaustive:
+        inputs = range(1, size)
+    else:
+        generator = rng if rng is not None else SystemRandom()
+        inputs = (generator.randrange(1, size) for _ in range(budget - 1))
+
+    def image(x: int) -&gt; int:
+        value = index(evaluate(x))
+        if not 0 &lt;= value &lt; size:
+            raise ValueError(&quot;permutation output is outside the given bit width&quot;)
+        return value
+
+    anchor = image(0)
+    evaluations = 1
+    rows = [0] * bits
+    rank = 0
+    for x in inputs:
+        row = x ^ image(x) ^ anchor
+        evaluations += 1
+        while row:
+            pivot = row.bit_length() - 1
+            if rows[pivot] == 0:
+                rows[pivot] = row
+                rank += 1
+                break
+            row ^= rows[pivot]
+        if rank == bits:
+            return ParityResult(&quot;no_witness&quot;, (), evaluations)
+
+    # Solve the triangular equations in order from low to high pivot bits.
+    mask_basis = []
+    for free_bit, pivot_row in enumerate(rows):
+        if pivot_row:
+            continue
+        mask = 1 &lt;&lt; free_bit
+        for bit, row in enumerate(rows):
+            if (row &amp; mask).bit_count() % 2:
+                mask |= 1 &lt;&lt; bit
+        mask_basis.append(mask)
+    return ParityResult(&quot;nonmixing&quot; if exhaustive else &quot;candidate&quot;, tuple(mask_basis), evaluations)
+</code></pre></main></div></body></html>

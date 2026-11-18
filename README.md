@@ -6,6 +6,10 @@ the pair. We count mixing and nonmixing permutations exactly for three and four
 bits. We measure convergence rates exhaustively at three bits and by sampling
 at four bits.
 
+Explore the [Difference Atlas research map](research-atlas/dist/index.html) for
+the questions, proofs, experiment data, and attribution notes. Run
+`uv run research-atlas/serve.py` to monitor the working tree locally.
+
 ## Decide whether one permutation mixes
 
 Given a truth table in the order P(0), P(1), …, [the classifier](classify_mixing.py)

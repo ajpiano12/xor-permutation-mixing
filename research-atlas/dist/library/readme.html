@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#122f35"><title>Pairwise mixing of small key-alternating ciphers · Difference Atlas</title>
+<link rel="icon" href="../mark.svg"><link rel="stylesheet" href="../reader.css"></head>
+<body><a class="skip" href="#document">Skip to document</a><header><div class="bar">
+<a class="brand" href="../index.html#map"><img src="../mark.svg" width="33" height="33" alt="">Difference Atlas</a>
+<nav aria-label="Atlas"><a href="../index.html#map">Research map</a><a href="../index.html#library">Proof library</a></nav>
+</div></header><div class="layout"><aside><div class="meta">Research note</div>
+<p class="filename">README.md</p><a download="README.md" href="raw/README.md">Download source</a><nav class="toc" aria-label="Sections"><h2>On this page</h2><ul><li><a href="#decide-whether-one-permutation-mixes">Decide whether one permutation mixes</a></li><li><a href="#faster-decisions-for-a-single-table">Faster decisions for a single table</a></li><li><a href="#when-the-table-is-too-large">When the table is too large</a></li><li><a href="#exact-four-bit-count">Exact four-bit count</a></li><li><a href="#four-bit-sample">Four-bit sample</a></li><li><a href="#three-bit-census">Three-bit census</a></li></ul></nav></aside>
+<main id="document" tabindex="-1"><h1 id="pairwise-mixing-of-small-key-alternating-ciphers">Pairwise mixing of small key-alternating ciphers</h1>
+<p>These experiments study problem 4 for pairs of distinct inputs. They use the same public permutation P in every round and a fresh uniform XOR key shared by the pair. We count mixing and nonmixing permutations exactly for three and four bits. We measure convergence rates exhaustively at three bits and by sampling at four bits.</p>
+<p>Explore the <a href="../index.html">Difference Atlas research map</a> for the questions, proofs, experiment data, and attribution notes. Run <code>uv run research-atlas/serve.py</code> to monitor the working tree locally.</p>
+<h2 id="decide-whether-one-permutation-mixes">Decide whether one permutation mixes</h2>
+<p>Given a truth table in the order P(0), P(1), …, <a href="classify_mixing.py.html">the classifier</a> decides pairwise mixing exactly for any positive bit length. It accepts decimal or <code>0x</code> integers separated by spaces, commas or newlines, and infers the bit length from the number of images.</p>
+<pre class="sh"><code>uv run --locked classify_mixing.py 0 1 5 6 7 2 3 4
+uv run --locked classify_mixing.py --witness 0 2 4 6 3 1 7 5
+uv run --locked classify_mixing.py --file permutation.txt</code></pre>
+<p>The first example mixes. The second gives a connected chain of period seven, and its witness lists the seven classes in cyclic order. On disconnected inputs, <code>--witness</code> gives a nonempty proper set of differences closed under every key. Use <code>--file -</code> to read standard input. The Python function <code>classify(images)</code> returns the same decision and witnesses.</p>
+<p>For <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi><mo>=</mo><msup><mn>2</mn><mi>n</mi></msup></mrow><annotation encoding="application/x-tex">N=2^n</annotation></semantics></math> table entries, the deterministic worst-case bounds are <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>N</mi><mn>2</mn></msup><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(N^2)</annotation></semantics></math> time and <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>N</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(N)</annotation></semantics></math> words of memory. Affine permutations take <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>N</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(N)</annotation></semantics></math> time. The proof also explains when the search can stop early. <a href="larger_bits.html#deciding-pairwise-mixing-from-a-truth-table">Decision theorem</a></p>
+<p>For a succinct Boolean permutation circuit, an exact decision is NP-hard. For black-box access, <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi><mo>−</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">N-1</annotation></semantics></math> queries are necessary in the deterministic worst case for <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi><mo>≥</mo><mn>3</mn></mrow><annotation encoding="application/x-tex">n\ge3</annotation></semantics></math>. <a href="circuit_input.html">Proofs for circuit and oracle inputs</a></p>
+<h2 id="faster-decisions-for-a-single-table">Faster decisions for a single table</h2>
+<p>The randomized filter takes the same inputs as the exact classifier.</p>
+<pre class="sh"><code>uv run --locked fast_mixing.py --error-bits 32 --file permutation.txt
+uv run --locked fast_mixing.py --exact --file permutation.txt</code></pre>
+<p><strong>Every <code>mixing</code> result is exact.</strong> All nonmixers return <code>unresolved</code> in filter mode. For each fixed mixing permutation, the probability of <code>unresolved</code> is at most <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mn>2</mn><mrow><mi>−</mi><mn>32</mn></mrow></msup><annotation encoding="application/x-tex">2^{-32}</annotation></semantics></math> with the first command, over the filter's fresh random choices. The filter first tests the transitions induced by just three sampled first inputs. When they leave the answer open, Walsh–Hadamard transforms search many differences simultaneously for edges that join components or break a proposed period. With <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi><mo>=</mo><msup><mn>2</mn><mi>n</mi></msup></mrow><annotation encoding="application/x-tex">N=2^n</annotation></semantics></math> entries and error budget <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>ε</mi><annotation encoding="application/x-tex">\varepsilon</annotation></semantics></math>, the worst-case cost is <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>N</mi><msup><mi>n</mi><mn>4</mn></msup><mo>log</mo><mrow><mo stretchy="true" form="prefix">(</mo><mi>N</mi><mi>n</mi><mi>/</mi><mi>ε</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(N n^4\log(Nn/\varepsilon))</annotation></semantics></math> word operations and <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>N</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(N)</annotation></semantics></math> words. The proof gives the word width and constants. <code>--exact</code> checks unresolved tables for an invariant parity and uses the deterministic classifier if needed, with quadratic worst-case time for fixed error budget. <a href="fast_table_proof.html">Algorithm and proof</a> · <a href="fast_mixing.py.html">Python implementation</a></p>
+<p>In a seeded check, the filter certified all 32,256 mixers in the three-bit census and all 9,974 mixers in the four-bit sample. The 8,064 and 26 nonmixers, respectively, returned <code>unresolved</code>.</p>
+<p>The deterministic classifier also has a native multicore implementation. Build it with a C compiler that supports OpenMP. It accepts up to 32-bit table entries and can print a closed set or cyclic classes on failure.</p>
+<pre class="sh"><code>cc -O3 -std=c11 -fopenmp parallel_mixing.c -o /tmp/parallel_mixing
+/tmp/parallel_mixing -j 8 --witness --file permutation.txt</code></pre>
+<p>Workers scan different rows of the same breadth-first-search level and merge their successor bitsets. All those rows start at the same depth, so merging preserves the period computation. The worst-case row work is still quadratic. With <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>T</mi><annotation encoding="application/x-tex">T</annotation></semantics></math> workers the scratch bitsets take <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>T</mi><mo stretchy="false" form="prefix">⌈</mo><mi>N</mi><mi>/</mi><mn>64</mn><mo stretchy="false" form="postfix">⌉</mo></mrow><annotation encoding="application/x-tex">T\lceil N/64\rceil</annotation></semantics></math> 64-bit words in addition to the table, depths and queue. The timings below include file parsing and are medians of five runs on an Intel Core i9-13900H. The 15-bit table shuffles each high-bit half independently. The 18-bit table is one uniformly shuffled permutation. <a href="parallel_mixing.c.html">Native implementation</a></p>
+<table>
+<thead>
+<tr>
+<th>Fixed input</th>
+<th style="text-align: right;">1 thread</th>
+<th style="text-align: right;">2 threads</th>
+<th style="text-align: right;">4 threads</th>
+<th style="text-align: right;">8 threads</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>15-bit disconnected</td>
+<td style="text-align: right;">2.292 s</td>
+<td style="text-align: right;">1.156 s</td>
+<td style="text-align: right;">0.587 s</td>
+<td style="text-align: right;">0.363 s</td>
+</tr>
+<tr>
+<td>18-bit mixing</td>
+<td style="text-align: right;">0.088 s</td>
+<td style="text-align: right;">0.073 s</td>
+<td style="text-align: right;">0.062 s</td>
+<td style="text-align: right;">0.114 s</td>
+</tr>
+</tbody>
+</table>
+<h2 id="when-the-table-is-too-large">When the table is too large</h2>
+<p>The parity screen accepts a callable that maps an integer block to an integer block. Fix the key if the callable implements a keyed block cipher. The budget helper and screen can be used directly from Python.</p>
+<pre class="python"><code>from parity_screen import parity_query_budget, screen_parity
+
+# encrypt_block(x) evaluates the same fixed 128-bit permutation on every call.
+budget = parity_query_budget(128, delta=0.01, epsilon=0.01)
+result = screen_parity(128, encrypt_block, budget=budget)</code></pre>
+<p>A nonzero mask in an exhaustive result certifies disconnection. With a query budget, <code>candidate</code> returns the basis of masks consistent with the samples. <code>no_witness</code> proves that this particular family of obstructions is absent. The 128-bit example takes at most 9,334 evaluations. With probability at least 99%, every surviving parity equation holds on more than 99% of all inputs. A circuit proof can verify whether a surviving equation holds everywhere. The exhaustive screen caught 7,232 of the 8,064 three-bit nonmixers and 25 of the 26 nonmixers in the four-bit sample. <a href="parity_screen.py.html">Parity screen</a> · <a href="circuit_input.html#screening-for-invariant-parities">Guarantee and circuit verification</a></p>
+<h2 id="exact-four-bit-count">Exact four-bit count</h2>
+<p>Exactly <strong>20,873,902,694,400 of the 16! permutations mix</strong>, a fraction of <strong>179,759/180,180 (99.766345%)</strong>. There are 48,887,150,592 disconnected cases and 43,008 connected periodic cases, all with period 15.</p>
+<p>A four-bit permutation fails to mix precisely when it is affine or maps the cosets of some proper nonzero binary subspace to cosets of that same subspace. A disconnected or periodic chain can therefore be recognized directly from the 16 images. The <a href="four_bit_count.html">counting argument</a> explains why the test is exhaustive, how to avoid double counting, and why the fraction changes so much between three and four bits.</p>
+<p>The <a href="larger_bits.html">larger-dimension proof</a> extends this characterization to five bits, constructs a six-bit counterexample, and gives a group-theoretic mixing criterion valid at every bit length.</p>
+<pre class="sh"><code>uv run --locked --extra four-bit exact_four_bit.py
+uv run --locked --extra four-bit exact_four_bit.py --bits 3</code></pre>
+<h2 id="four-bit-sample">Four-bit sample</h2>
+<pre class="sh"><code>uv run --locked --extra four-bit sample_four_bit.py
+uv run --locked python verify_rate_bins.py --scale 100000
+uv run --locked --extra four-bit python -m unittest discover -s tests -v</code></pre>
+<p>The default run shuffles a fresh list of the 16 images for each of 10,000 draws with replacement, using seed 20261118. Change <code>--samples</code>, <code>--seed</code>, <code>--profile-rounds</code>, and <code>--output-dir</code> to run another experiment. Each permutation acts on 15 nonzero differences. Graph reachability and period give an exact classification independently of how long the distance curve is recorded.</p>
+<p><strong>9,974 permutations mixed (99.74%), 26 were disconnected, and zero connected periodic cases appeared in this sample.</strong> The 95% Wilson interval for the mixing fraction is 99.62% to 99.82%. At ε = 1/4 the counts for 3, 4, 5, 6 and 7 cipher rounds were 2,582, 7,300, 83, 7 and 2. The exhaustive three-bit fraction was 80%. <a href="https://www.jstor.org/stable/2276774">Wilson's interval</a></p>
+<p>Among mixing draws there were <strong>9,957 distinct exact distance curves through round 8</strong>. The sample already had 6,978 different curves through round 3 and 9,924 through round 4. These counts compare the entire sequence of distances from round 0 up to the indicated round.</p>
+<p>For each mixing permutation, let T be its difference transition matrix, U the uniform-row matrix, and d(r) its worst-start total variation distance. The CSV reports the numerical spectral radius of T − U. This is the asymptotic factor lim d(r)^(1/r), since 2d(r) is the maximum absolute row sum of (T − U)^r for r ≥ 1. The median factor was 0.387 and the middle 90% ran from 0.319 to 0.539. The independent <code>verify_rate_bins.py</code> audit certifies <strong>at least 7,798 distinct asymptotic factors</strong> by finding witnesses in disjoint intervals of width 0.00001. Floating-point eigenvalues select candidate intervals. Integer characteristic polynomials and exact tests of the moduli of their roots certify membership, including roots on interval boundaries.</p>
+<p>A secondary concentration of slower rates appears near 0.53. For each nonzero four-bit mask h, compare the parity bit h·x with h·P(x), allowing the latter to be complemented. The best agreement over all masks was 14 of 16 inputs for 1,334 mixing permutations. Their median factor was 0.530, compared with 0.378 for the remaining 8,640. Perfect agreement on all 16 inputs preserves the partition into the two parity classes and forces disconnection. It occurred in 25 of the 26 disconnected draws.</p>
+<p>There is a reason for the location of that second peak. With agreement on 14 inputs, the two exceptions u and v lie on opposite sides of the parity split, since the input and output bits are balanced. For difference u XOR v the bit of the difference always survives a round. For every other nonzero difference a, exactly four choices of x put just one of x and x XOR a among the exceptions. Thus its bit flips with probability 1/4. Starting uniformly in each parity class gives the one-step matrix <code>[[3/4, 1/4], [7/32, 25/32]]</code> (even, odd). Its second eigenvalue is <strong>17/32 = 0.53125</strong>. This explains the scale of the peak. The exceptional difference and the other odd differences have different flip probabilities, so a single permutation's long-run rate still depends on how probability moves within the classes.</p>
+<ul>
+<li><a href="results/four_bit/samples.csv.gz">Sample measurements</a> give P(0) through P(15), status, period, numerical rate, best bit agreement, the first difference round at each threshold, and exact worst-start TV fractions at rounds 0 through 8. The cipher requires one additional round at these thresholds. Nonmixing draws have empty rate, time, and distance fields.</li>
+<li><a href="results/four_bit/summary.json">Summary</a> includes the sampling parameters, confidence interval, profile counts, rate quantiles and cipher-round counts for six thresholds from 1/4 to 1/128.</li>
+<li><a href="results/four_bit/convergence.png">Convergence plot</a> shows the spread of the exact distances over the mixing sample and a histogram of its asymptotic rates.</li>
+</ul>
+<h2 id="three-bit-census">Three-bit census</h2>
+<p>This experiment enumerates all 40,320 permutations of three-bit strings for the pairwise case (<code>t = 2</code>) of problem 4. Each round applies the same public permutation as <code>x → P(x XOR K)</code>, using a fresh uniform three-bit key shared by both inputs. The measurement is the first round at which <strong>every</strong> ordered pair of distinct inputs is within total variation distance ε of uniform on the 56 ordered pairs of distinct outputs.</p>
+<h3 id="run">Run</h3>
+<pre class="sh"><code>uv run --locked mixing.py
+uv run --locked python -m unittest discover -s tests -v</code></pre>
+<p>The included results use ε = 1/4, 1/8, 1/16, 1/32, 1/64 and 1/128. To try other thresholds and keep these results, choose a different output directory.</p>
+<pre class="sh"><code>uv run --locked mixing.py --epsilons 1/4 0.1 1/1000 --output-dir results-custom</code></pre>
+<p>The program uses Python 3.10 or newer and the standard library. It accepts fractions and decimals in the range 0 &lt; ε ≤ 1/2. At those thresholds a reducible or periodic seven-state chain always has a starting state whose distance exceeds ε. Threshold comparisons use exact fractions.</p>
+<h3 id="results">Results</h3>
+<p>Of the 40,320 permutations, <strong>32,256 (80%) mix</strong>, 7,680 have disconnected difference graphs, and 384 have connected graphs of period seven. For example, the identity fixes every difference. The permutation with images <code>0 2 4 6 3 1 7 5</code> cycles deterministically through all seven differences.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">ε</th>
+<th style="text-align: right;">Fastest pair mixing (rounds)</th>
+<th style="text-align: right;">Slowest finite pair mixing (rounds)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">1/4</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">5</td>
+</tr>
+<tr>
+<td style="text-align: right;">1/8</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">6</td>
+</tr>
+<tr>
+<td style="text-align: right;">1/16</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">7</td>
+</tr>
+<tr>
+<td style="text-align: right;">1/32</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">8</td>
+</tr>
+<tr>
+<td style="text-align: right;">1/64</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">9</td>
+</tr>
+<tr>
+<td style="text-align: right;">1/128</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">10</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><a href="results/permutations.csv.gz">permutations.csv</a> contains one row per permutation per threshold. The eight numbers in <code>permutation</code> give P(0) through P(7).</li>
+<li><a href="results/summary.csv">summary.csv</a> groups these rows by threshold, graph status, period and mixing time. To plot a histogram at a given ε, filter to <code>status == "mixing"</code>, use <code>pair_rounds</code> as the horizontal axis, and use <code>permutations</code> as the count. At ε = 1/4 the counts for rounds 3, 4 and 5 are 10,752, 16,128 and 5,376.</li>
+</ul>
+<p>Both files give a numeric <code>epsilon</code> for plotting and an <code>epsilon_exact</code> fraction for reproducing the cutoff. Empty round counts indicate failure to converge to uniform from every start. The period is given for connected chains.</p>
+<h3 id="calculation">Calculation</h3>
+<p>For nonzero XOR differences a and b, the transition probability is</p>
+<pre class="text"><code>T[a,b] = #{u in {0,…,7} : P(u) XOR P(u XOR a) = b} / 8.</code></pre>
+<p>Every row sums to one. Every column does too, since each of the eight ordered output pairs of difference b has exactly one ordered preimage under P. Thus uniform on the seven differences is stationary. The program checks connectivity and period before computing powers. For a mixing chain it propagates integer key-sequence counts and finds the least r satisfying</p>
+<pre class="text"><code>max_a (1/2) sum_b |T^r[a,b] − 1/7| ≤ ε.</code></pre>
+<p>This is <code>difference_rounds</code>. To see why <code>pair_rounds</code> is exactly one more, condition on difference b just before the next key. The common XOR makes the ordered pair uniform on the eight pairs of that difference. These seven sets are disjoint and equally sized, so the pair's distance from uniform equals the preceding difference distance. The final application of P to both coordinates preserves that distance. The zero-round pair distance is 55/56.</p>
+<p>The exhaustive loop computes one matrix for every P with P(0) = 0. XORing any constant into all eight outputs cancels in the difference formula. Writing all eight translations of each of the 7! representatives covers every labeled permutation exactly once per threshold.</p>
+<h3 id="the-inverse-permutation-as-a-benchmark">The inverse permutation as a benchmark</h3>
+<p>Liu, Tessaro and Vaikuntanathan analyze the patched field inverse (zero maps to zero) in Appendix A. Their two-round theorem assumes an even bit length and includes a final XOR key. Section 4 allows different public permutations across rounds. The experiment here fixes one P throughout and measures the odd-bit case directly. <a href="https://eprint.iacr.org/2021/507.pdf">Liu, Tessaro and Vaikuntanathan, full paper</a></p>
+<p>In the polynomial basis of GF(8) modulo x³ + x + 1, the inverse has images <code>0 1 5 6 7 2 3 4</code>. Its one-step distance is 3/7. In two difference rounds the probability of returning to the starting difference is 1/4 and the probability of each other difference is 1/8. Thus T² = (1/8)I + (7/8)U, where every row of U is uniform. Every two more rounds divide the distance by eight. This gives an independent check on the sweep and explains why the inverse needs just <strong>3, 3, 4, 5, 5 and 6 cipher rounds</strong> at the six thresholds. It attains the minimum at each.</p>
+<p>Jain, Liu, Mizgerd, Pelecanos, Tessaro and Vaikuntanathan show that the inverse walk requires Ω(q log(1/ε)) rounds for approximate <strong>four-wise</strong> independence in their asymptotic regime, where q is the field size. This distinction matters when extending the experiment beyond pairs. <a href="https://eprint.iacr.org/2024/1795">Jain et al., <em>How Fast Does the Inverse Walk Approximate a Random Permutation?</em></a></p>
+</main></div></body></html>

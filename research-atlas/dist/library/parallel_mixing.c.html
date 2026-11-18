@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#122f35"><title>parallel_mixing.c · Difference Atlas</title>
+<link rel="icon" href="../mark.svg"><link rel="stylesheet" href="../reader.css"></head>
+<body><a class="skip" href="#document">Skip to document</a><header><div class="bar">
+<a class="brand" href="../index.html#map"><img src="../mark.svg" width="33" height="33" alt="">Difference Atlas</a>
+<nav aria-label="Atlas"><a href="../index.html#map">Research map</a><a href="../index.html#library">Proof library</a></nav>
+</div></header><div class="layout"><aside><div class="meta">Source code</div>
+<p class="filename">parallel_mixing.c</p><a download="parallel_mixing.c" href="raw/parallel_mixing.c">Download source</a></aside>
+<main id="document" tabindex="-1"><h1>parallel_mixing.c</h1><pre><code>/* cc -O3 -std=c11 -fopenmp parallel_mixing.c -o parallel_mixing */
+#include &lt;ctype.h&gt;
+#include &lt;errno.h&gt;
+#include &lt;inttypes.h&gt;
+#include &lt;limits.h&gt;
+#include &lt;omp.h&gt;
+#include &lt;stdbool.h&gt;
+#include &lt;stdint.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+static void fail(const char *message) {
+    fprintf(stderr, &quot;%s\n&quot;, message);
+    exit(EXIT_FAILURE);
+}
+
+static void *allocate(size_t count, size_t width) {
+    void *memory = calloc(count, width);
+    if (!memory) fail(&quot;Insufficient memory for the permutation table or search.&quot;);
+    return memory;
+}
+
+typedef struct {
+    uint32_t *images;
+    size_t size, capacity;
+} Table;
+
+static void append(Table *table, const char *token) {
+    char *end;
+    errno = 0;
+    int base = token[0] == &#x27;0&#x27; &amp;&amp; (token[1] == &#x27;x&#x27; || token[1] == &#x27;X&#x27;) ? 16 : 10;
+    uintmax_t value = strtoumax(token, &amp;end, base);
+    if (*token == &#x27;-&#x27; || *end || end == token || errno || value &gt; UINT32_MAX)
+        fail(&quot;Expected unsigned decimal or 0x-prefixed 32-bit images.&quot;);
+    if (table-&gt;size == table-&gt;capacity) {
+        if (table-&gt;capacity &gt; SIZE_MAX / (2 * sizeof(uint32_t)) ||
+            table-&gt;capacity &gt; UINT32_MAX)
+            fail(&quot;Table exceeds the 32-bit implementation or this host&#x27;s address space.&quot;);
+        size_t capacity = table-&gt;capacity ? 2 * table-&gt;capacity : 16;
+        void *images = realloc(table-&gt;images, capacity * sizeof(uint32_t));
+        if (!images) fail(&quot;Insufficient memory to read the permutation table.&quot;);
+        table-&gt;images = images;
+        table-&gt;capacity = capacity;
+    }
+    table-&gt;images[table-&gt;size++] = (uint32_t)value;
+}
+
+static void read_images(Table *table, FILE *stream, const char *text) {
+    char token[64];
+    size_t used = 0;
+    for (;;) {
+        int c = stream ? fgetc(stream) : (*text ? (unsigned char)*text++ : EOF);
+        if (c == EOF || c == &#x27;,&#x27; || isspace(c)) {
+            if (used) {
+                token[used] = &#x27;\0&#x27;;
+                append(table, token);
+                used = 0;
+            }
+            if (c == EOF) break;
+        } else {
+            if (used == sizeof(token) - 1 || c == &#x27;\0&#x27;) fail(&quot;Invalid image token.&quot;);
+            token[used++] = (char)c;
+        }
+    }
+    if (stream &amp;&amp; ferror(stream)) fail(&quot;Unable to read permutation table.&quot;);
+}
+
+static unsigned validate(const Table *table) {
+    size_t n = table-&gt;size;
+    if (n &lt; 2 || (n &amp; (n - 1))) fail(&quot;Table length must be a power of two, at least two.&quot;);
+    size_t words = (n - 1) / 64 + 1;
+    uint64_t *seen = allocate(words, sizeof(*seen));
+    for (size_t i = 0; i &lt; n; i++) {
+        uint32_t b = table-&gt;images[i];
+        uint64_t bit = UINT64_C(1) &lt;&lt; (b % 64);
+        if (b &gt;= n || (seen[b / 64] &amp; bit)) fail(&quot;Expected a permutation of 0 through N-1.&quot;);
+        seen[b / 64] |= bit;
+    }
+    free(seen);
+    unsigned bits = 0;
+    while ((n &gt;&gt;= 1) != 0) bits++;
+    return bits;
+}
+
+static uint32_t gcd(uint32_t a, uint32_t b) {
+    while (b) {
+        uint32_t remainder = a % b;
+        a = b;
+        b = remainder;
+    }
+    return a;
+}
+
+typedef struct {
+    size_t reached;
+    uint32_t period;
+} Result;
+
+static bool affine(const uint32_t *p, size_t n) {
+    for (size_t x = 1; x &lt; n; x++) {
+        size_t bit = x &amp; -x;
+        if ((p[x] ^ p[x ^ bit]) != (p[bit] ^ p[0])) return false;
+    }
+    return true;
+}
+
+/* Both members of {x,x XOR a} yield the same edge. Scan its unique member
+   whose least significant active bit of a is zero. */
+static void add_row(const uint32_t *p, size_t n, uint32_t a, uint64_t *targets) {
+    size_t bit = a &amp; -a;
+    for (size_t base = 0; base &lt; n; base += 2 * bit) {
+        for (size_t x = base; x &lt; base + bit; x++) {
+            uint32_t b = p[x] ^ p[x ^ a];
+            targets[b / 64] |= UINT64_C(1) &lt;&lt; (b % 64);
+        }
+    }
+}
+
+static Result classify(const Table *table, int threads, uint32_t *depth) {
+    size_t n = table-&gt;size;
+    const uint32_t *p = table-&gt;images;
+    for (size_t a = 0; a &lt; n; a++) depth[a] = UINT32_MAX;
+    depth[1] = 0;
+    Result result = {1, 0};
+
+    if (affine(p, n)) {
+        uint32_t a = 1;
+        while ((a = p[a] ^ p[0]) != 1) depth[a] = (uint32_t)result.reached++;
+        result.period = (uint32_t)result.reached;
+        return result;
+    }
+
+    uint32_t *queue = allocate(n, sizeof(*queue));
+    queue[0] = 1;
+    size_t words = (n - 1) / 64 + 1;
+    if ((size_t)threads &gt; n - 1) threads = (int)(n - 1);
+    if (words &gt; SIZE_MAX / (size_t)threads) fail(&quot;Worker bitsets exceed address space.&quot;);
+    uint64_t *scratch = allocate(words * (size_t)threads, sizeof(*scratch));
+    for (size_t first = 0; first &lt; result.reached;) {
+        /* The frontier stays fixed while new vertices are appended to queue. */
+        size_t end = result.reached;
+        uint32_t next_depth = depth[queue[first]] + 1;
+        size_t batch = (size_t)threads;
+        while (first &lt; end) {
+            size_t count = batch &lt; end - first ? batch : end - first;
+            int workers = count &lt; (size_t)threads ? (int)count : threads;
+            memset(scratch, 0, words * (size_t)workers * sizeof(*scratch));
+            #pragma omp parallel num_threads(workers) if(workers &gt; 1)
+            {
+                uint64_t *local = scratch + words * (size_t)omp_get_thread_num();
+                #pragma omp for schedule(static)
+                for (size_t i = first; i &lt; first + count; i++)
+                    add_row(p, n, queue[i], local);
+            }
+
+            /* All rows in the batch share next_depth. Unioning their targets
+               preserves both the set of discoveries and the period gcd. */
+            for (size_t word = 0; word &lt; words; word++) {
+                uint64_t targets = scratch[word];
+                for (int t = 1; t &lt; workers; t++) targets |= scratch[words * (size_t)t + word];
+                while (targets) {
+                    unsigned offset = (unsigned)__builtin_ctzll(targets);
+                    uint32_t b = (uint32_t)(word * 64 + offset);
+                    targets &amp;= targets - 1;
+                    if (depth[b] == UINT32_MAX) {
+                        depth[b] = next_depth;
+                        queue[result.reached++] = b;
+                    } else if (result.period != 1) {
+                        result.period = gcd(result.period, next_depth - depth[b]);
+                    }
+                }
+            }
+            first += count;
+            if (result.period == 1 &amp;&amp; result.reached == n - 1) goto done;
+            /* Double until the whole remaining frontier fits in one batch. */
+            batch = batch &lt;= (end - first) / 2 ? batch * 2 : end - first;
+        }
+    }
+done:
+    free(scratch);
+    free(queue);
+    return result;
+}
+
+static void report(size_t n, unsigned bits, Result r, const uint32_t *depth, bool witness) {
+    bool connected = r.reached == n - 1;
+    bool mixes = connected &amp;&amp; r.period == 1;
+    const char *status = !connected ? &quot;disconnected&quot; : mixes ? &quot;mixing&quot; : &quot;periodic&quot;;
+    printf(&quot;{\&quot;bits\&quot;:%u,\&quot;mixes\&quot;:%s,\&quot;status\&quot;:\&quot;%s\&quot;,\&quot;period\&quot;:&quot;, bits, mixes ? &quot;true&quot; : &quot;false&quot;, status);
+    if (connected) printf(&quot;%&quot; PRIu32, r.period);
+    else fputs(&quot;null&quot;, stdout);
+    if (witness &amp;&amp; !connected) {
+        fputs(&quot;,\&quot;closed_set\&quot;:[&quot;, stdout);
+        bool first = true;
+        for (size_t a = 1; a &lt; n; a++) if (depth[a] != UINT32_MAX) {
+            printf(&quot;%s%zu&quot;, first ? &quot;&quot; : &quot;,&quot;, a);
+            first = false;
+        }
+        putchar(&#x27;]&#x27;);
+    } else if (witness &amp;&amp; !mixes) {
+        uint32_t *heads = allocate(r.period, sizeof(*heads));
+        uint32_t *next = allocate(n, sizeof(*next));
+        for (size_t a = n - 1; a &gt; 0; a--) {
+            uint32_t group = depth[a] % r.period;
+            next[a] = heads[group];
+            heads[group] = (uint32_t)a;
+        }
+        fputs(&quot;,\&quot;cyclic_classes\&quot;:[&quot;, stdout);
+        for (uint32_t i = 0; i &lt; r.period; i++) {
+            fputs(i ? &quot;,[&quot; : &quot;[&quot;, stdout);
+            for (uint32_t a = heads[i]; a; a = next[a]) {
+                printf(&quot;%&quot; PRIu32, a);
+                if (next[a]) putchar(&#x27;,&#x27;);
+            }
+            putchar(&#x27;]&#x27;);
+        }
+        putchar(&#x27;]&#x27;);
+        free(heads);
+        free(next);
+    }
+    puts(&quot;}&quot;);
+}
+
+int main(int argc, char **argv) {
+    const char *path = NULL;
+    int threads = omp_get_max_threads();
+    bool witness = false;
+    Table table = {0};
+    for (int i = 1; i &lt; argc; i++) {
+        if (!strcmp(argv[i], &quot;-j&quot;) || !strcmp(argv[i], &quot;--threads&quot;)) {
+            if (++i == argc) fail(&quot;Missing thread count.&quot;);
+            char *end;
+            errno = 0;
+            long value = strtol(argv[i], &amp;end, 10);
+            if (*end || errno || value &lt;= 0 || value &gt; INT_MAX) fail(&quot;Expected a positive thread count.&quot;);
+            threads = (int)value;
+        } else if (!strcmp(argv[i], &quot;--witness&quot;)) witness = true;
+        else if (!strcmp(argv[i], &quot;--file&quot;)) {
+            if (++i == argc || path) fail(&quot;Supply one --file argument.&quot;);
+            path = argv[i];
+        } else if (!strcmp(argv[i], &quot;--help&quot;) || !strcmp(argv[i], &quot;-h&quot;)) {
+            puts(&quot;Usage: parallel_mixing [-j THREADS] [--witness] (--file PATH | IMAGE ...)\n&quot;
+                 &quot;Images are P(0),P(1),... in decimal or 0x hex. --file - reads stdin.&quot;);
+            return 0;
+        } else read_images(&amp;table, NULL, argv[i]);
+    }
+    if (path) {
+        if (table.size) fail(&quot;Use --file or command line images.&quot;);
+        FILE *input = !strcmp(path, &quot;-&quot;) ? stdin : fopen(path, &quot;r&quot;);
+        if (!input) { perror(path); return 1; }
+        read_images(&amp;table, input, NULL);
+        if (input != stdin) fclose(input);
+    }
+    unsigned bits = validate(&amp;table);
+    uint32_t *depth = allocate(table.size, sizeof(*depth));
+    Result result = classify(&amp;table, threads, depth);
+    report(table.size, bits, result, depth, witness);
+    free(depth);
+    free(table.images);
+    return 0;
+}
+</code></pre></main></div></body></html>

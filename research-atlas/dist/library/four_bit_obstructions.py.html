@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#122f35"><title>four_bit_obstructions.py · Difference Atlas</title>
+<link rel="icon" href="../mark.svg"><link rel="stylesheet" href="../reader.css"></head>
+<body><a class="skip" href="#document">Skip to document</a><header><div class="bar">
+<a class="brand" href="../index.html#map"><img src="../mark.svg" width="33" height="33" alt="">Difference Atlas</a>
+<nav aria-label="Atlas"><a href="../index.html#map">Research map</a><a href="../index.html#library">Proof library</a></nav>
+</div></header><div class="layout"><aside><div class="meta">Source code</div>
+<p class="filename">four_bit_obstructions.py</p><a download="four_bit_obstructions.py" href="raw/four_bit_obstructions.py">Download source</a></aside>
+<main id="document" tabindex="-1"><h1>four_bit_obstructions.py</h1><pre><code>&quot;&quot;&quot;Four-bit nonmixing families. The counting argument is in FOUR_BIT_COUNT.md.&quot;&quot;&quot;
+
+from functools import cache
+from itertools import combinations
+from math import factorial, prod
+
+
+@cache
+def proper_subspaces():
+    &quot;&quot;&quot;All 65 proper nonzero subspaces, in the order used for disjoint counting.&quot;&quot;&quot;
+    hyperplanes = [
+        frozenset(x for x in range(16) if (x &amp; mask).bit_count() % 2 == 0)
+        for mask in range(1, 16)
+    ]
+    lines = [frozenset((0, x)) for x in range(1, 16)]
+    planes = {tuple(sorted((0, a, b, a ^ b))) for a, b in combinations(range(1, 16), 2)}
+    return tuple(hyperplanes + lines + [frozenset(w) for w in sorted(planes)])
+
+
+def find_obstruction(permutation):
+    &quot;&quot;&quot;Return (family, invariant subspace) or (affine order family, None), or None if mixing.&quot;&quot;&quot;
+    if sorted(permutation) != list(range(16)):
+        raise ValueError(&quot;expected a permutation of 0 through 15&quot;)
+    p = tuple(value ^ permutation[0] for value in permutation)
+    for w in proper_subspaces():
+        # For the coset containing 0 the condition reduces to p(W) = W.
+        if any(p[a] not in w for a in w):
+            continue
+        if all(p[x] ^ p[x ^ a] in w for x in range(16) for a in w):
+            family = {8: &quot;hyperplane&quot;, 2: &quot;line&quot;, 4: &quot;plane&quot;}[len(w)]
+            return family, tuple(sorted(w))
+    if all(p[x ^ bit] == p[x] ^ p[bit] for bit in (1, 2, 4, 8) for x in range(16)):
+        # With no nontrivial invariant subspace, all nonzero orbits have
+        # length 5 or all have length 15.
+        state = p[1]
+        order = 1
+        while state != 1:
+            state = p[state]
+            order += 1
+        return f&quot;affine_order_{order}&quot;, None
+    return None
+
+
+def subspace_count(n, k):
+    &quot;&quot;&quot;Number of k-dimensional binary subspaces (count ordered bases twice).&quot;&quot;&quot;
+    return prod(2**n - 2**i for i in range(k)) // prod(2**k - 2**i for i in range(k))
+
+
+def hyperplane_preservers(n):
+    &quot;&quot;&quot;Count permutations preserving at least one parity partition, allowing a swap.&quot;&quot;&quot;
+    exact = {}
+    for k in range(n, 0, -1):
+        cells = 2**k
+        per_subspace = cells * factorial(2**(n - k))**cells
+        incidences = subspace_count(n, k) * per_subspace
+        exact[k] = incidences - sum(subspace_count(j, k) * count for j, count in exact.items())
+    return sum(exact.values())
+
+
+def obstruction_counts():
+    &quot;&quot;&quot;Disjoint labeled counts, in decreasing priority as in find_obstruction.&quot;&quot;&quot;
+    # A fixed line leaves a three-bit quotient permutation fixing zero.
+    quotient_choices = factorial(7) - hyperplane_preservers(3) // 8
+    fiber_flips = 2**7 - 8
+    lines = 16 * 15 * quotient_choices * fiber_flips
+
+    # For a fixed plane choose an order-3 quotient map, three free offsets,
+    # and four binary GL(2) maps with no common fixed direction.
+    fiber_linear_choices = 6**4 - 3 * 2**4 + 2
+    per_plane = 2 * 4**3 * fiber_linear_choices
+    gl4 = prod(16 - 2**i for i in range(4))
+    gl2_over_four = (16 - 1) * (16 - 4)
+    counted_five_times = gl4 // gl2_over_four
+    planes = 16 * (35 * per_plane - 4 * counted_five_times)
+
+    # One irreducible quartic of order 5 and two of order 15. The
+    # invertible maps commuting with a given irreducible matrix number 15.
+    per_quartic = 16 * gl4 // 15
+    return {
+        &quot;hyperplane&quot;: hyperplane_preservers(4),
+        &quot;line&quot;: lines,
+        &quot;plane&quot;: planes,
+        &quot;affine_order_5&quot;: per_quartic,
+        &quot;affine_order_15&quot;: 2 * per_quartic,
+    }
+</code></pre></main></div></body></html>

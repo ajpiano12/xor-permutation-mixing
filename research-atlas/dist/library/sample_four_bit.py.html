@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#122f35"><title>sample_four_bit.py · Difference Atlas</title>
+<link rel="icon" href="../mark.svg"><link rel="stylesheet" href="../reader.css"></head>
+<body><a class="skip" href="#document">Skip to document</a><header><div class="bar">
+<a class="brand" href="../index.html#map"><img src="../mark.svg" width="33" height="33" alt="">Difference Atlas</a>
+<nav aria-label="Atlas"><a href="../index.html#map">Research map</a><a href="../index.html#library">Proof library</a></nav>
+</div></header><div class="layout"><aside><div class="meta">Source code</div>
+<p class="filename">sample_four_bit.py</p><a download="sample_four_bit.py" href="raw/sample_four_bit.py">Download source</a></aside>
+<main id="document" tabindex="-1"><h1>sample_four_bit.py</h1><pre><code>&quot;&quot;&quot;Sample uniform four-bit permutations and measure pairwise convergence.&quot;&quot;&quot;
+
+import argparse
+import csv
+import json
+import random
+from collections import Counter
+from dataclasses import dataclass
+from math import sqrt
+from pathlib import Path
+from statistics import NormalDist
+from tempfile import TemporaryDirectory
+
+import numpy as np
+
+from mixing import DEFAULT_THRESHOLDS, MixingResult, analyze, transition_counts
+
+
+@dataclass(frozen=True)
+class SampleResult(MixingResult):
+    rate: float | None = None
+    best_bit_agreement: int = 0
+
+
+def best_bit_agreement(permutation):
+    &quot;&quot;&quot;Max number of inputs where a nonzero linear bit is preserved, up to complement.&quot;&quot;&quot;
+    changes = [x ^ y for x, y in enumerate(permutation)]
+    best = 0
+    for mask in range(1, 16):
+        flips = sum((mask &amp; change).bit_count() % 2 for change in changes)
+        best = max(best, flips, 16 - flips)
+    return best
+
+
+def analyze_permutation(permutation, profile_rounds):
+    if len(permutation) != 16 or profile_rounds &lt; 0:
+        raise ValueError(&quot;expected a four-bit permutation and a nonnegative profile length&quot;)
+    counts = transition_counts(permutation)
+    result = analyze(counts, DEFAULT_THRESHOLDS, profile_rounds)
+    rate = None
+    if result.status == &quot;mixing&quot;:
+        # T-U acts as T on deviations from uniform and kills the constant mode.
+        centered = np.asarray(counts) / 16 - 1 / 15
+        rate = float(np.max(np.abs(np.linalg.eigvals(centered))))
+    return SampleResult(result.status, result.period, result.difference_rounds, result.distances,
+                        rate, best_bit_agreement(permutation))
+
+
+def wilson_interval(successes, total):
+    z = NormalDist().inv_cdf(0.975)
+    p = successes / total
+    z2 = z * z
+    center = (p + z2 / (2 * total)) / (1 + z2 / total)
+    width = z * sqrt(p * (1 - p) / total + z2 / (4 * total**2)) / (1 + z2 / total)
+    return [max(0.0, center - width), min(1.0, center + width)]
+
+
+def summarize(seed, total, profile_rounds, counts_by_agreement, mixing):
+    rates = [row.rate for row in mixing]
+    quantiles = [0, 0.05, 0.25, 0.5, 0.75, 0.95, 1]
+    statuses = (&quot;mixing&quot;, &quot;disconnected&quot;, &quot;periodic&quot;)
+    bit_summary = {}
+    for score, counts in sorted(counts_by_agreement.items()):
+        group = [row.rate for row in mixing if row.best_bit_agreement == score]
+        bit_summary[score] = {
+            &quot;status_counts&quot;: dict(counts),
+            &quot;median_mixing_rate&quot;: float(np.median(group)) if group else None,
+        }
+    return {
+        &quot;seed&quot;: seed,
+        &quot;draws&quot;: total,
+        &quot;profile_rounds&quot;: profile_rounds,
+        &quot;status_counts&quot;: {s: sum(counts[s] for counts in counts_by_agreement.values()) for s in statuses},
+        &quot;by_best_linear_bit_agreement&quot;: bit_summary,
+        &quot;mixing_fraction&quot;: len(mixing) / total,
+        &quot;mixing_fraction_wilson_95&quot;: wilson_interval(len(mixing), total),
+        &quot;distinct_exact_profiles_through_round&quot;: {
+            r: len({row.distances[:r + 1] for row in mixing}) for r in range(profile_rounds + 1)
+        },
+        &quot;asymptotic_rate_quantiles&quot;: (
+            dict(zip(quantiles, map(float, np.quantile(rates, quantiles)))) if mixing else {}
+        ),
+        &quot;cipher_round_counts&quot;: {
+            str(e): dict(sorted(Counter(row.difference_rounds[i] + 1 for row in mixing).items()))
+            for i, e in enumerate(DEFAULT_THRESHOLDS)
+        },
+    }
+
+
+def plot_sample(mixing, path):
+    import matplotlib
+    matplotlib.use(&quot;Agg&quot;)
+    import matplotlib.pyplot as plt
+
+    fig, axes = plt.subplots(1, 2, figsize=(10.6, 4.1), constrained_layout=True)
+    if mixing:
+        profiles = np.array([row.distances for row in mixing], dtype=float)
+        rounds = np.arange(profiles.shape[1])
+        low, lower, median, upper, high = np.quantile(profiles, [0.05, 0.25, 0.5, 0.75, 0.95], axis=0)
+        axes[0].fill_between(rounds, low, high, color=&quot;#c6e5e1&quot;, label=&quot;5th–95th percentiles&quot;)
+        axes[0].fill_between(rounds, lower, upper, color=&quot;#78bcb3&quot;, label=&quot;25th–75th percentiles&quot;)
+        axes[0].plot(rounds, median, &quot;o-&quot;, color=&quot;#125c52&quot;, ms=4, label=&quot;Median&quot;)
+        axes[0].set_yscale(&quot;log&quot;)
+        axes[0].legend(frameon=False, fontsize=9)
+        rates = np.array([row.rate for row in mixing])
+        bins = np.arange(int(rates.min() * 100), int(rates.max() * 100) + 2) / 100
+        near_bit = np.array([row.best_bit_agreement &gt;= 14 for row in mixing])
+        axes[1].hist([rates[~near_bit], rates[near_bit]], bins=bins, stacked=True,
+                     color=[&quot;#3566a1&quot;, &quot;#cb7731&quot;], edgecolor=&quot;white&quot;, linewidth=0.45,
+                     label=[&quot;At most 12 of 16&quot;, &quot;14 of 16&quot;])
+        axes[1].legend(title=&quot;Best linear bit agreement&quot;, frameon=False, fontsize=9)
+    else:
+        for ax in axes:
+            ax.text(0.5, 0.5, &quot;No mixing draws&quot;, ha=&quot;center&quot;, va=&quot;center&quot;, transform=ax.transAxes)
+    axes[0].set(xlabel=&quot;Difference rounds&quot;, ylabel=&quot;Worst-case total variation distance&quot;,
+                title=&quot;Distance to uniform&quot;)
+    axes[1].set(xlabel=&quot;Asymptotic factor per round (smaller is faster)&quot;, ylabel=&quot;Permutations&quot;,
+                title=&quot;Distribution of convergence rates&quot;)
+    for ax in axes:
+        ax.spines[[&quot;top&quot;, &quot;right&quot;]].set_visible(False)
+    fig.suptitle(f&quot;Four-bit pairwise mixing  ·  {len(mixing):,} mixing draws&quot;)
+    fig.savefig(path, dpi=170)
+    plt.close(fig)
+
+
+def run_sample(total, seed, profile_rounds, output_dir):
+    if total &lt;= 0 or profile_rounds &lt; 0:
+        raise ValueError(&quot;draw count must be positive and profile length nonnegative&quot;)
+    rng = random.Random(seed)
+    counts_by_agreement = {}
+    mixing = []
+    output_dir.mkdir(parents=True, exist_ok=True)
+    with TemporaryDirectory(dir=output_dir) as tmp:
+        folder = Path(tmp)
+        with (folder / &quot;samples.csv&quot;).open(&quot;w&quot;, encoding=&quot;utf-8&quot;, newline=&quot;&quot;) as stream:
+            writer = csv.writer(stream, lineterminator=&quot;\n&quot;)
+            writer.writerow([
+                &quot;draw&quot;, &quot;permutation&quot;, &quot;status&quot;, &quot;period&quot;, &quot;rate&quot;, &quot;best_bit_agreement&quot;,
+                *(f&quot;diff_rounds_{e.numerator}_{e.denominator}&quot; for e in DEFAULT_THRESHOLDS),
+                *(f&quot;tv_{r}&quot; for r in range(profile_rounds + 1)),
+            ])
+            for draw in range(1, total + 1):
+                permutation = list(range(16))
+                rng.shuffle(permutation)
+                result = analyze_permutation(permutation, profile_rounds)
+                counts_by_agreement.setdefault(result.best_bit_agreement, Counter())[result.status] += 1
+                if result.status == &quot;mixing&quot;:
+                    mixing.append(result)
+                writer.writerow([
+                    draw, &quot; &quot;.join(map(str, permutation)), result.status, result.period, result.rate,
+                    result.best_bit_agreement,
+                    *result.difference_rounds, *(result.distances or [None] * (profile_rounds + 1)),
+                ])
+        summary = summarize(seed, total, profile_rounds, counts_by_agreement, mixing)
+        (folder / &quot;summary.json&quot;).write_text(json.dumps(summary, indent=2) + &quot;\n&quot;, encoding=&quot;utf-8&quot;)
+        plot_sample(mixing, folder / &quot;convergence.png&quot;)
+        for name in (&quot;samples.csv&quot;, &quot;summary.json&quot;, &quot;convergence.png&quot;):
+            (folder / name).replace(output_dir / name)
+    return summary
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(&quot;--samples&quot;, type=int, default=10_000)
+    parser.add_argument(&quot;--seed&quot;, type=int, default=20261118)
+    parser.add_argument(&quot;--profile-rounds&quot;, type=int, default=8)
+    parser.add_argument(&quot;--output-dir&quot;, type=Path, default=Path(&quot;results/four_bit&quot;))
+    args = parser.parse_args()
+    if args.samples &lt; 1 or args.profile_rounds &lt; 0:
+        parser.error(&quot;--samples must be positive and --profile-rounds must be nonnegative&quot;)
+    summary = run_sample(args.samples, args.seed, args.profile_rounds, args.output_dir)
+    print(f&quot;{summary[&#x27;status_counts&#x27;]} across {args.samples:,} draws with seed {args.seed}&quot;)
+    print(f&quot;Results written to {args.output_dir}&quot;)
+
+
+if __name__ == &quot;__main__&quot;:
+    main()
+</code></pre></main></div></body></html>

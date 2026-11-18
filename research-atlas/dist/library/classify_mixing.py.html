@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#122f35"><title>classify_mixing.py · Difference Atlas</title>
+<link rel="icon" href="../mark.svg"><link rel="stylesheet" href="../reader.css"></head>
+<body><a class="skip" href="#document">Skip to document</a><header><div class="bar">
+<a class="brand" href="../index.html#map"><img src="../mark.svg" width="33" height="33" alt="">Difference Atlas</a>
+<nav aria-label="Atlas"><a href="../index.html#map">Research map</a><a href="../index.html#library">Proof library</a></nav>
+</div></header><div class="layout"><aside><div class="meta">Source code</div>
+<p class="filename">classify_mixing.py</p><a download="classify_mixing.py" href="raw/classify_mixing.py">Download source</a></aside>
+<main id="document" tabindex="-1"><h1>classify_mixing.py</h1><pre><code>&quot;&quot;&quot;Decide pairwise mixing for a permutation of n-bit strings given by its images.&quot;&quot;&quot;
+
+import argparse
+import json
+import sys
+from collections.abc import Callable, Iterable
+from dataclasses import dataclass
+from math import gcd
+from operator import index
+from pathlib import Path
+
+
+@dataclass(frozen=True)
+class Decision:
+    status: str
+    period: int | None
+    closed_set: tuple[int, ...] = ()
+    cyclic_classes: tuple[tuple[int, ...], ...] = ()
+
+
+def classify_support(states: int, successors: Callable[[int], Iterable[int]]) -&gt; Decision:
+    &quot;&quot;&quot;Decide a balanced finite chain on 1,...,states, streaming its directed edges.&quot;&quot;&quot;
+    depth = [-1] * (states + 1)
+    depth[1] = 0
+    discovered = [1]
+    period = 0
+    # The list is a BFS queue; new discoveries are appended in traversal order.
+    for a in discovered:
+        next_depth = depth[a] + 1
+        for b in successors(a):
+            if depth[b] == -1:
+                depth[b] = next_depth
+                discovered.append(b)
+            elif period != 1:
+                period = gcd(period, next_depth - depth[b])
+            if period == 1 and len(discovered) == states:
+                return Decision(&quot;mixing&quot;, 1)
+
+    if len(discovered) &lt; states:
+        # All outgoing edges of this proper reachable set have been checked.
+        return Decision(&quot;disconnected&quot;, None, tuple(discovered))
+    classes = [[] for _ in range(period)]
+    for a in range(1, states + 1):
+        classes[depth[a] % period].append(a)
+    return Decision(&quot;periodic&quot;, period, cyclic_classes=tuple(map(tuple, classes)))
+
+
+def validated_table(permutation: Iterable[int]) -&gt; tuple[int, ...]:
+    &quot;&quot;&quot;Materialize and validate a truth table on a positive number of bits.&quot;&quot;&quot;
+    try:
+        p = tuple(map(index, permutation))
+    except TypeError as exc:
+        raise ValueError(&quot;permutation images must be integers&quot;) from exc
+    size = len(p)
+    if size &lt; 2 or size &amp; (size - 1):
+        raise ValueError(&quot;table length must be a power of two, at least 2&quot;)
+    seen = bytearray(size)
+    for value in p:
+        if not 0 &lt;= value &lt; size or seen[value]:
+            raise ValueError(f&quot;expected each of the integers 0 through {size - 1} exactly once&quot;)
+        seen[value] = 1
+    return p
+
+
+def classify(permutation: Iterable[int]) -&gt; Decision:
+    &quot;&quot;&quot;Exact decision in O(N²) word operations and O(N) words for N table entries.&quot;&quot;&quot;
+    p = validated_table(permutation)
+    size = len(p)
+
+    # Clearing a set bit gives an induction test for linearity of P(x) XOR P(0).
+    def agrees_with_basis(x):
+        bit = x &amp; -x
+        return p[x] ^ p[x ^ bit] == p[bit] ^ p[0]
+
+    if all(agrees_with_basis(x) for x in range(1, size)):
+        return classify_support(size - 1, lambda a: (p[a] ^ p[0],))
+
+    def successors(a):
+        for x in range(size):
+            y = x ^ a
+            if x &lt; y:
+                yield p[x] ^ p[y]
+
+    return classify_support(size - 1, successors)
+
+
+def add_table_arguments(parser):
+    parser.add_argument(&quot;images&quot;, nargs=&quot;*&quot;, help=&quot;P(0), P(1), ... as decimal or 0x-prefixed integers&quot;)
+    parser.add_argument(&quot;--file&quot;, metavar=&quot;PATH&quot;, help=&quot;read the image list from a file, or - for stdin&quot;)
+
+
+def read_table_arguments(parser, args):
+    if bool(args.images) == (args.file is not None):
+        parser.error(&quot;supply the images on the command line or use --file&quot;)
+    try:
+        if args.file is None:
+            raw = &quot; &quot;.join(args.images)
+        elif args.file == &quot;-&quot;:
+            raw = sys.stdin.read()
+        else:
+            raw = Path(args.file).read_text(encoding=&quot;utf-8&quot;)
+        tokens = raw.replace(&quot;,&quot;, &quot; &quot;).split()
+        return [int(token, 16 if token.lower().startswith(&quot;0x&quot;) else 10) for token in tokens]
+    except (ValueError, OSError) as exc:
+        parser.error(str(exc))
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    add_table_arguments(parser)
+    parser.add_argument(&quot;--witness&quot;, action=&quot;store_true&quot;, help=&quot;include a closed set or the cyclic classes on failure&quot;)
+    args = parser.parse_args()
+    p = read_table_arguments(parser, args)
+    try:
+        decision = classify(p)
+    except ValueError as exc:
+        parser.error(str(exc))
+    output = {&quot;bits&quot;: len(p).bit_length() - 1, &quot;mixes&quot;: decision.status == &quot;mixing&quot;,
+              &quot;status&quot;: decision.status, &quot;period&quot;: decision.period}
+    if args.witness and decision.closed_set:
+        output[&quot;closed_set&quot;] = decision.closed_set
+    if args.witness and decision.cyclic_classes:
+        output[&quot;cyclic_classes&quot;] = decision.cyclic_classes
+    print(json.dumps(output))
+
+
+if __name__ == &quot;__main__&quot;:
+    main()
+</code></pre></main></div></body></html>
