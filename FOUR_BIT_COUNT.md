@@ -27,8 +27,8 @@ families exhaust the possibilities.
    of W are preserved as a partition exactly when
    P(x ⊕ w) ⊕ P(x) belongs to W for every x and w in W. This traps every
    nonzero starting difference in W inside W forever. P may permute the cosets.
-3. Every remaining four-bit permutation mixes. The exhaustiveness of this last
-   step is specific to this dimension.
+3. Every remaining four-bit permutation mixes. The same criterion holds at five
+   bits, and a six-bit counterexample shows its limit. [Proofs for larger dimensions](LARGER_BITS.md)
 
 `find_obstruction(P)` returns a subspace witness, an affine order, or `None`
 for a mixing permutation. [Implementation](four_bit_obstructions.py)

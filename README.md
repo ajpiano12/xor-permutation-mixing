@@ -19,6 +19,10 @@ A disconnected or periodic chain can therefore be recognized directly from the
 exhaustive, how to avoid double counting, and why the fraction changes so much
 between three and four bits.
 
+The [larger-dimension proof](LARGER_BITS.md) extends this characterization to
+five bits, constructs a six-bit counterexample, and gives a group-theoretic
+mixing criterion valid at every bit length.
+
 ```sh
 uv run --locked --extra four-bit exact_four_bit.py
 uv run --locked --extra four-bit exact_four_bit.py --bits 3
