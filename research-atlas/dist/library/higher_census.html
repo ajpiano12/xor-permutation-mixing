@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#122f35"><title>All tuple orders on three bits · Difference Atlas</title>
+<link rel="icon" href="../mark.svg"><link rel="stylesheet" href="../reader.css"></head>
+<body><a class="skip" href="#document">Skip to document</a><header><div class="bar">
+<a class="brand" href="../index.html#map"><img src="../mark.svg" width="33" height="33" alt="">Difference Atlas</a>
+<nav aria-label="Atlas"><a href="../index.html#map">Research map</a><a href="../index.html#library">Proof library</a></nav>
+</div></header><div class="layout"><aside><div class="meta">Research note</div>
+<p class="filename">HIGHER_CENSUS.md</p><a download="HIGHER_CENSUS.md" href="raw/HIGHER_CENSUS.md">Download source</a><nav class="toc" aria-label="Sections"><h2>On this page</h2><ul><li><a href="#where-the-extra-5376-failures-come-from">Where the extra 5,376 failures come from</a></li><li><a href="#how-to-reproduce-the-census">How to reproduce the census</a></li></ul></nav></aside>
+<main id="document" tabindex="-1"><h1 id="all-tuple-orders-on-three-bits">All tuple orders on three bits</h1>
+<p>Exactly 32,256 of the 40,320 three-bit permutations mix ordered triples. These are exactly the pairwise mixers. Raising the order to four leaves 26,880 permutations. All of those mix through order six. A single keyed round already gives a uniform output on one input.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">Order</th>
+<th style="text-align: right;">Mixing permutations</th>
+<th style="text-align: right;">Disconnected</th>
+<th style="text-align: right;">Connected and periodic</th>
+<th>Full cipher rounds at TV ≤ 1/4 among mixers</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">32,256</td>
+<td style="text-align: right;">7,680</td>
+<td style="text-align: right;">384</td>
+<td>3, 4, 5</td>
+</tr>
+<tr>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">32,256</td>
+<td style="text-align: right;">8,064</td>
+<td style="text-align: right;">0</td>
+<td>4, 5, 6</td>
+</tr>
+<tr>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">26,880</td>
+<td style="text-align: right;">13,440</td>
+<td style="text-align: right;">0</td>
+<td>5, 6, 7</td>
+</tr>
+<tr>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">26,880</td>
+<td style="text-align: right;">13,440</td>
+<td style="text-align: right;">0</td>
+<td>5, 7</td>
+</tr>
+<tr>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">26,880</td>
+<td style="text-align: right;">13,440</td>
+<td style="text-align: right;">0</td>
+<td>6, 8</td>
+</tr>
+<tr>
+<td style="text-align: right;">7 or 8</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">24,192</td>
+<td style="text-align: right;">16,128</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p>“Disconnected” and “periodic” describe the support chain on <strong>ordered differences</strong>. Threshold times maximize over every ordered distinct starting tuple, draw fresh independent XOR keys, and reuse the same public permutation each round. The data give exact hitting times for six thresholds from 1/4 to 1/128. <a href="results/higher_three_bit.csv">Full census</a></p>
+<h2 id="where-the-extra-5376-failures-come-from">Where the extra 5,376 failures come from</h2>
+<p>Take the table <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="true" form="prefix">(</mo><mn>0</mn><mo>,</mo><mn>1</mn><mo>,</mo><mn>3</mn><mo>,</mo><mn>4</mn><mo>,</mo><mn>2</mn><mo>,</mo><mn>6</mn><mo>,</mo><mn>7</mn><mo>,</mo><mn>5</mn><mo stretchy="true" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">(0,1,3,4,2,6,7,5)</annotation></semantics></math>. Triples mix. Four points can lie in an affine plane or outside one, after an appropriate relabeling of the eight points. Both the translations and this permutation preserve the resulting collection of fourteen planes. Starting on a plane therefore excludes every quadruple outside that collection for all time. Three distinct binary points are always affinely independent, so this obstruction first appears at four. The census verifies triple mixing separately.</p>
+<p>Relabeling the ordinary plane system by every permutation produces 30 distinct systems. Eight of them are invariant under the original translations. Every one of the 5,376 triple mixers that fail on quadruples preserves exactly one of these eight systems. This is one symmetry class of labeled tables. Group transitivity gives a dimension-independent explanation for the plateau from four through six and an explicit family showing how pairs and triples can separate in larger dimension. <a href="algorithmic_prior_art.html">Group proofs and examples</a></p>
+<p>Every translation of eight points is even. After <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>r</mi><annotation encoding="application/x-tex">r</annotation></semantics></math> rounds the composite permutation has sign <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>sign</mo><msup><mrow><mo stretchy="true" form="prefix">(</mo><mi>P</mi><mo stretchy="true" form="postfix">)</mo></mrow><mi>r</mi></msup></mrow><annotation encoding="application/x-tex">\operatorname{sign}(P)^r</annotation></semantics></math>. Observing seven images determines the eighth and hence detects the sign. Uniform permutations give each sign probability one half. This explains the impossibility at seven and eight.</p>
+<h2 id="how-to-reproduce-the-census">How to reproduce the census</h2>
+<p>Write a tuple relative to its first point as <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>a</mi><mn>1</mn></msub><mo>,</mo><mi>…</mi><mo>,</mo><msub><mi>a</mi><mrow><mi>t</mi><mo>−</mo><mn>1</mn></mrow></msub><mo stretchy="true" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">(a_1,\ldots,a_{t-1})</annotation></semantics></math>. At each difference step choose <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>x</mi><annotation encoding="application/x-tex">x</annotation></semantics></math> uniformly and apply the same map <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>a</mi><mo>↦</mo><mi>P</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>x</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>⊕</mo><mi>P</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>x</mi><mo>⊕</mo><mi>a</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">a\mapsto P(x)\oplus P(x\oplus a)</annotation></semantics></math> to every entry. This is a permutation on nonzero differences and therefore on these shapes. A cipher round starts by making the first point uniform independently of the incoming shape. Its final public permutation is a bijection. Consequently TV after <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>r</mi><annotation encoding="application/x-tex">r</annotation></semantics></math> cipher rounds equals shape TV after <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>r</mi><mo>−</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">r-1</annotation></semantics></math> difference rounds, also for triples and above.</p>
+<p>Adding any constant to the output of <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>P</mi><annotation encoding="application/x-tex">P</annotation></semantics></math> cancels in each difference. Translating the input permutes the possible <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>x</mi><annotation encoding="application/x-tex">x</annotation></semantics></math>. Simultaneous linear changes of coordinates just relabel every shape. The program groups tables by these symmetries, counts the exact multiplicity of each of 20 representatives, and checks the sum is <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>8</mn><mi>!</mi></mrow><annotation encoding="application/x-tex">8!</annotation></semantics></math>. Reordering the tuple and translating its starting points preserve its distance. This reduces the number of starts required for the worst-case calculation. Each step sums exact integer path counts over eight predecessors. A graph-period computation detects failures before the threshold loop. The last image at order eight is forced, so the order-seven calculation gives that row too. <a href="higher_census.py.html">Census program</a></p>
+<pre class="sh"><code>uv run --locked --extra four-bit higher_census.py</code></pre>
+<p>O’Connor’s 1995 census already identified all 10,752 three-bit APN permutations as ergodic. Checking the explicit difference tables of the 20 representatives shows these are exactly the 10,752 tables attaining TV 1/4 after three full cipher rounds. Each has worst TV 3/28 then, while every other table has TV at least 3/7. The full status breakdown, higher-order threshold measurements, and match to the eight plane systems are project computations. <a href="https://link.springer.com/content/pdf/10.1007%2F3-540-49264-X_2.pdf">O’Connor, §2.2</a> The affine and alternating group actions underlying the obstructions are classical. Published priority for the exact census has not been established.</p>
+</main></div></body></html>

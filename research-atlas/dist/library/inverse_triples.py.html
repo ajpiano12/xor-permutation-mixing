@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#122f35"><title>inverse_triples.py · Difference Atlas</title>
+<link rel="icon" href="../mark.svg"><link rel="stylesheet" href="../reader.css"></head>
+<body><a class="skip" href="#document">Skip to document</a><header><div class="bar">
+<a class="brand" href="../index.html#map"><img src="../mark.svg" width="33" height="33" alt="">Difference Atlas</a>
+<nav aria-label="Atlas"><a href="../index.html#map">Research map</a><a href="../index.html#library">Proof library</a></nav>
+</div></header><div class="layout"><aside><div class="meta">Source code</div>
+<p class="filename">inverse_triples.py</p><a download="inverse_triples.py" href="raw/inverse_triples.py">Download source</a></aside>
+<main id="document" tabindex="-1"><h1>inverse_triples.py</h1><pre><code>&quot;&quot;&quot;Certify a finite triple-mixing bound by comparison with a binary field inverse.&quot;&quot;&quot;
+import argparse
+from fractions import Fraction
+import json
+
+from classify_mixing import add_table_arguments, read_table_arguments, validated_table
+
+
+def field_inverse_table(size, modulus):
+    &quot;&quot;&quot;Invert polynomials by the extended Euclidean algorithm over GF(2).&quot;&quot;&quot;
+    if size &lt; 2 or size &amp; (size - 1) or modulus.bit_length() != size.bit_length() or modulus &lt;= 0:
+        raise ValueError(&quot;supply a positive binary modulus of degree equal to the bit length of the inputs&quot;)
+    result = [0]
+    for x in range(1, size):
+        u, v = x, modulus
+        c, d = 1, 0
+        while u != 1:
+            if not u:
+                raise ValueError(&quot;the binary modulus is reducible&quot;)
+            shift = u.bit_length() - v.bit_length()
+            if shift &lt; 0:
+                u, v = v, u
+                c, d = d, c
+                shift = -shift
+            u ^= v &lt;&lt; shift
+            c ^= d &lt;&lt; shift
+        while c &gt;= size:
+            c ^= modulus &lt;&lt; (c.bit_length() - modulus.bit_length())
+        result.append(c)
+    return result
+
+
+def triple_certificate(p, modulus):
+    p = validated_table(p)
+    if len(p) &lt; 4:
+        raise ValueError(&quot;at least three distinct inputs are required&quot;)
+    field_inverse = field_inverse_table(len(p), modulus)
+    mismatches = sum(a != b for a, b in zip(p, field_inverse))
+    bound = min(Fraction(1), Fraction(7 + 6 * mismatches, len(p)))
+    return mismatches, bound
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    add_table_arguments(parser)
+    parser.add_argument(&quot;--modulus&quot;, required=True, type=lambda s: int(s, 0),
+                        help=&quot;binary field modulus, e.g. 0x25 for X^5 + X^2 + 1&quot;)
+    parser.add_argument(&quot;--epsilon&quot;, type=Fraction, default=Fraction(1, 4))
+    args = parser.parse_args()
+    if not 0 &lt; args.epsilon &lt; 1:
+        parser.error(&quot;epsilon must lie strictly between zero and one&quot;)
+    try:
+        p = read_table_arguments(parser, args)
+        mismatches, delta = triple_certificate(p, args.modulus)
+    except ValueError as exc:
+        parser.error(str(exc))
+    rounds = 3
+    error = delta
+    if delta &lt; Fraction(1, 2):
+        while error &gt; args.epsilon:
+            error *= 2 * delta
+            rounds += 3
+    print(json.dumps({&quot;mismatches&quot;: mismatches, &quot;three_round_tv_upper_bound&quot;: str(delta),
+                      &quot;epsilon&quot;: str(args.epsilon),
+                      &quot;sufficient_cipher_rounds&quot;: rounds if error &lt;= args.epsilon else None}))
+
+
+if __name__ == &quot;__main__&quot;:
+    main()
+</code></pre></main></div></body></html>

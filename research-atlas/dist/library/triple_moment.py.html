@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#122f35"><title>research/triple_moment.py · Difference Atlas</title>
+<link rel="icon" href="../mark.svg"><link rel="stylesheet" href="../reader.css"></head>
+<body><a class="skip" href="#document">Skip to document</a><header><div class="bar">
+<a class="brand" href="../index.html#map"><img src="../mark.svg" width="33" height="33" alt="">Difference Atlas</a>
+<nav aria-label="Atlas"><a href="../index.html#map">Research map</a><a href="../index.html#library">Proof library</a></nav>
+</div></header><div class="layout"><aside><div class="meta">Source code</div>
+<p class="filename">triple_moment.py</p><a download="triple_moment.py" href="raw/triple_moment.py">Download source</a></aside>
+<main id="document" tabindex="-1"><h1>research/triple_moment.py</h1><pre><code>&quot;&quot;&quot;Enumerate low-codimension collision patterns for keyed triple walks.
+
+A formal XOR expression is a bitmask. Bits zero and one denote the two
+linearly independent fixed starting offsets. Further bits denote independent
+vector variables, each of which ranges freely over the whole field.
+&quot;&quot;&quot;
+
+from collections import Counter
+from fractions import Fraction
+from itertools import permutations
+from math import factorial
+
+
+def remainder(expression, basis):
+    for pivot, row in basis:
+        if expression &amp; pivot:
+            expression ^= row
+    return expression
+
+
+def add_equation(expression, basis):
+    &quot;&quot;&quot;Set the XOR expression to zero, or return None for a contradiction.&quot;&quot;&quot;
+    reduced = remainder(expression, basis)
+    if reduced == 0:
+        return basis
+    if reduced &lt; 4:
+        return None  # The two fixed offsets are linearly independent.
+    pivot = 1 &lt;&lt; (reduced.bit_length() - 1)
+    return sorted([*basis, (pivot, reduced)], reverse=True)
+
+
+def low_rank_patterns(rounds, copies=2):
+    &quot;&quot;&quot;Counts terminal alias patterns by equality rank and distinct calls.&quot;&quot;&quot;
+    outcomes = Counter()
+    calls_per_path = 3 * rounds
+    output_bit_offset = 2 + copies * rounds
+    max_rank = 2 * (copies - 1)
+
+    def visit(replies, history, basis, unequal):
+        step = len(replies)
+        # Constrain the endpoint shape to equal the first path&#x27;s as soon as its
+        # coordinates are available. This prunes infeasible three-path branches early.
+        if step &gt; calls_per_path:
+            last_path, within = divmod(step - 1, calls_per_path)
+            last_layer, i = divmod(within, 3)
+            if last_layer == rounds - 1 and i in (1, 2):
+                first_endpoint = calls_per_path - 3
+                latest_endpoint = last_path * calls_per_path + first_endpoint
+                equation = (replies[first_endpoint] ^ replies[first_endpoint + i]
+                            ^ replies[latest_endpoint] ^ replies[latest_endpoint + i])
+                basis = add_equation(equation, basis)
+                if basis is None or len(basis) &gt; max_rank:
+                    return
+                if any(remainder(e, basis) == 0 for e in unequal):
+                    return
+        if step == calls_per_path * copies:
+            outcomes[len(basis), len(history)] += 1
+            return
+
+        path, within = divmod(step, calls_per_path)
+        layer, position = divmod(within, 3)
+        key = 1 &lt;&lt; (2 + path * rounds + layer)
+        previous = (0, 1, 2)[position] if layer == 0 else replies[step - 3]
+        address = previous ^ key
+
+        # A forced alias is the only possible case because old addresses are distinct.
+        for old, value in history:
+            if remainder(address ^ old, basis) == 0:
+                visit([*replies, value], history, basis, unequal)
+                return
+
+        # A possible alias adds one independent equality. All aliases reuse the old reply.
+        if len(basis) &lt; max_rank:
+            for old, value in history:
+                updated = add_equation(address ^ old, basis)
+                if updated is not None and all(remainder(e, updated) != 0 for e in unequal):
+                    visit([*replies, value], history, updated, unequal)
+
+        # The remaining case assigns a new reply to an address distinct from every old one.
+        value = 1 &lt;&lt; (output_bit_offset + step)
+        excluded = [address ^ old for old, _ in history]
+        excluded.extend(value ^ old_value for _, old_value in history)
+        visit([*replies, value], [*history, (address, value)], basis, [*unequal, *excluded])
+
+    visit([], [], [], [])
+    return dict(sorted(outcomes.items()))
+
+
+def one_round_at_eight():
+    &quot;&quot;&quot;Independent finite check over every normalized permutation at q=8.&quot;&quot;&quot;
+    n = 8
+    matches = 0
+    for tail in permutations(range(1, n)):
+        table = (0, *tail)
+        histogram = Counter((table[k] ^ table[k ^ 1], table[k] ^ table[k ^ 2])
+                            for k in range(n))
+        matches += sum(v*v for v in histogram.values())
+    measured = Fraction(matches, n**2 * factorial(n-1))
+    predicted = (Fraction(1, n) + Fraction(3, n*(n-3))
+                 + Fraction(n-4, n*(n-3)*(n-5)))
+    assert measured == predicted
+    return measured
+
+
+if __name__ == &quot;__main__&quot;:
+    print(&quot;One-step finite collision probability at q=8:&quot;, one_round_at_eight())
+    for rounds in range(1, 4):
+        patterns = low_rank_patterns(rounds)
+        print(f&quot;{rounds} difference step(s), counts by (rank, distinct calls): {patterns}&quot;)
+        if rounds == 3:
+            assert patterns == {(2, 18): 1}
+    joint = low_rank_patterns(rounds=2, copies=3)
+    assert joint == {(4, 6): 1, (4, 12): 3, (4, 18): 1}
+    print(&quot;Three two-step paths, counts by (rank, distinct calls):&quot;, joint)
+</code></pre></main></div></body></html>

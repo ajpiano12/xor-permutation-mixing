@@ -3,12 +3,12 @@ window.ATLAS = {
     {
       "id": "model",
       "title": "Foundations",
-      "summary": "Follow two distinct inputs through the same keyed rounds."
+      "summary": "Follow ordered distinct inputs through the same keyed rounds."
     },
     {
       "id": "counts",
-      "title": "Small permutations",
-      "summary": "Count which permutations mix and measure how quickly they approach uniformity."
+      "title": "Counts and rates",
+      "summary": "Count which permutations mix and measure how many rounds they need."
     },
     {
       "id": "structure",
@@ -91,7 +91,7 @@ window.ATLAS = {
         "Of the 40,320 possible tables, 32,256 mix, 7,680 have disconnected difference graphs and 384 cycle through seven classes. The last group can reach every difference, but the round number determines the current class.",
         "At total variation distance 1/4, the fastest mixers need three cipher rounds and the slowest need five. The census uses exact integer counts at six cutoffs from 1/4 to 1/128."
       ],
-      "attribution": "This is an exhaustive computation from the project. The published difference-chain method explains how to compute each walk. The cited papers do not supply this census, and independent publication priority remains unverified.",
+      "attribution": "This is an exhaustive computation from the project. O’Connor enumerated all three-bit tables in 1995 and reported the 10,752 ergodic APN permutations. These are exactly the fastest tables at TV 1/4 here. The full status breakdown and six-threshold profiles are project measurements.",
       "resources": [
         {
           "label": "Census and threshold table",
@@ -116,7 +116,8 @@ window.ATLAS = {
       ],
       "sourceIds": [
         "markov",
-        "ltv"
+        "ltv",
+        "oc95"
       ]
     },
     {
@@ -202,30 +203,30 @@ window.ATLAS = {
     {
       "id": "general-count",
       "branch": "counts",
-      "title": "The fraction at larger n",
-      "status": "Open",
-      "provenance": "Open question",
-      "summary": "How often does a uniformly chosen permutation mix as the bit length grows?",
+      "title": "The five-bit count",
+      "status": "Proved",
+      "provenance": "Project derivation",
+      "summary": "Exactly one in about 9,694,845 uniformly sampled five-bit tables fails to mix pairs.",
       "body": [
-        "The three- and four-bit proportions are exact. At five bits the project can recognize every failure structurally, but counting all overlaps among preserved subspaces still requires a separate calculation.",
-        "At six bits, failure can also come from structure outside the four-bit list. A general counting formula would need to account for those families and their intersections."
+        "There are 27,141,314,518,175,866,661,787,402,240 nonmixers among 32! tables. Of these, 61,931,520 have connected graphs of period 31.",
+        "A recurrence counts the overlaps among preserved coset partitions in every dimension. At five bits the classification makes the count complete. At six bits some primitive permutations fail as well."
       ],
-      "attribution": "This comparison is an open task in the notebook. Results about typical permutations in related multi-round models have different assumptions from an exact count for one repeated P.",
+      "attribution": "The coset obstruction and the degree-32 group classification are published. The exact count and recurrence are project derivations with independent checks at three and four bits.",
       "resources": [
         {
-          "label": "Exact count at four bits",
-          "href": "library/four_bit_count.html",
+          "label": "Exact five-bit counting proof",
+          "href": "library/five_bit_count.html",
           "kind": "Proof"
         },
         {
-          "label": "Known higher-dimensional structure",
-          "href": "library/larger_bits.html",
-          "kind": "Notes"
+          "label": "Integer recurrence",
+          "href": "library/group_counts.py.html",
+          "kind": "Code"
         }
       ],
       "sourceIds": [
-        "ltv",
-        "blocks"
+        "blocks",
+        "degree32"
       ]
     },
     {
@@ -303,26 +304,36 @@ window.ATLAS = {
     },
     {
       "id": "higher-tuples",
-      "branch": "structure",
-      "title": "Beyond pairs of inputs",
-      "status": "Open",
-      "provenance": "Open question",
-      "summary": "Which small permutations mix on triples, and how long does that take?",
+      "branch": "counts",
+      "title": "The three-bit census at every order",
+      "status": "Measured",
+      "provenance": "Project experiment",
+      "summary": "On three bits, 80% of permutations mix triples and two thirds mix at every order from four through six.",
       "body": [
-        "The orbit criterion already decides the eventual uniformity question in principle for fixed tuple order. Tracking t−1 differences instead of one gives a state space of (N−1)(N−2)⋯(N−t+1) shapes.",
-        "An exact census of higher-tuple rates for the small fixed permutations is still open in this project. Published lower bounds for four inputs in the inverse walk give a reason to measure these separately."
+        "The 5,376 tables that mix triples and fail on quadruples each preserve one relabeling of the fourteen affine planes. An ordered quadruple can detect membership in that family.",
+        "The exhaustive calculation gives worst-start hitting times at six TV thresholds. At orders seven and eight, the sign of the composite permutation prevents mixing."
       ],
-      "attribution": "Higher-order mixing has an established literature. The unfinished work here concerns exhaustive small fixed-permutation measurements in the notebook’s round convention.",
+      "attribution": "The exact census and the match to invariant plane systems are project computations. Classical group actions explain the plateau above order four.",
       "resources": [
         {
-          "label": "General tuple criterion",
-          "href": "library/larger_bits.html#an-exact-criterion-for-every-bit-length",
-          "kind": "Proof"
+          "label": "Census, method and plane obstruction",
+          "href": "library/higher_census.html",
+          "kind": "Notes"
+        },
+        {
+          "label": "All symmetry classes and thresholds",
+          "href": "library/results/higher_three_bit.csv",
+          "kind": "Data"
+        },
+        {
+          "label": "Reproduce the census",
+          "href": "library/higher_census.py.html",
+          "kind": "Code"
         }
       ],
       "sourceIds": [
-        "inverse",
-        "ltv"
+        "round-groups",
+        "saarinen"
       ]
     },
     {
@@ -443,6 +454,327 @@ window.ATLAS = {
       "sourceIds": [
         "blocks"
       ]
+    },
+    {
+      "id": "literature",
+      "branch": "model",
+      "title": "What is already known?",
+      "status": "Reviewed",
+      "provenance": "Published",
+      "summary": "Trace the work from differential Markov chains in 1991 to the recent inverse-walk and SPN papers.",
+      "body": [
+        "The review identifies which results use the same public table every round, which model the support as a random graph, and which prove a statement for every starting tuple.",
+        "Each research question links to its evidence, including exact counts, finite-round certificates and the remaining proof gaps."
+      ],
+      "attribution": "The cited sources establish the findings attributed to them. Project proofs and measurements have their own entries and priority notes.",
+      "resources": [
+        {
+          "label": "Literature review and open problems",
+          "href": "library/literature_review.html",
+          "kind": "Notes"
+        },
+        {
+          "label": "Detailed rate comparisons",
+          "href": "library/rates_and_literature.html",
+          "kind": "Notes"
+        },
+        {
+          "label": "Algorithmic literature",
+          "href": "library/algorithmic_prior_art.html",
+          "kind": "Notes"
+        }
+      ],
+      "sourceIds": [
+        "markov",
+        "oc94",
+        "oc95",
+        "ltv",
+        "inverse",
+        "layouts"
+      ]
+    },
+    {
+      "id": "typical-rate",
+      "branch": "counts",
+      "title": "Three rounds for typical pairs",
+      "status": "Proved",
+      "provenance": "Project derivation",
+      "summary": "A typical uniform permutation used in every round mixes every starting pair in exactly three rounds at TV 1/4.",
+      "body": [
+        "After two cipher rounds the worst distance tends to exp(−1/2), about 0.607. After three it tends to zero. The result holds at every fixed threshold strictly between zero and exp(−1/2).",
+        "Averaging over a linear relabeling between two copies of the same difference matrix controls the effect of reusing one table. Seeded samples through nine bits accompany the proof."
+      ],
+      "attribution": "O’Connor obtained the one-step law, and O’Connor–Golić studied eventual convergence using a random-graph assumption. The finite-round worst-start proof is a project derivation with unverified priority.",
+      "resources": [
+        {
+          "label": "Three-round theorem and earlier work",
+          "href": "library/rates_and_literature.html",
+          "kind": "Proof"
+        },
+        {
+          "label": "Rate and inverse checks",
+          "href": "library/rate_probe.py.html",
+          "kind": "Code"
+        }
+      ],
+      "sourceIds": [
+        "oc94",
+        "oc95",
+        "ltv"
+      ]
+    },
+    {
+      "id": "typical-failure",
+      "branch": "structure",
+      "title": "Why one parity dominates failure",
+      "status": "Proved",
+      "provenance": "Project derivation",
+      "summary": "At large bit lengths, almost every nonmixing permutation preserves a binary parity split.",
+      "body": [
+        "For N = 2ⁿ the failure probability is asymptotic to 2(N−1) / binomial(N,N/2), uniformly for tuple orders 2 through N−2. The number of candidate splits grows only linearly in N, while the probability of preserving one falls exponentially.",
+        "The proof counts overlaps among splits and bounds all other block systems and exceptional primitive groups."
+      ],
+      "attribution": "Babai–Hayes already gives qualitative typical generation. The leading equivalent and its attribution to one parity obstruction are derived here from published group bounds.",
+      "resources": [
+        {
+          "label": "Proof and finite probability bounds",
+          "href": "library/group_counts.html",
+          "kind": "Proof"
+        }
+      ],
+      "sourceIds": [
+        "blocks",
+        "generation"
+      ]
+    },
+    {
+      "id": "all-orders",
+      "branch": "algorithms",
+      "title": "Decide every tuple order",
+      "status": "Implemented",
+      "provenance": "Corollary",
+      "summary": "A stabilizer chain determines the highest order that mixes, without enumerating ordered tuples.",
+      "body": [
+        "For n ≥ 3, four-wise mixing is equivalent to the translations and P generating a group containing the alternating group. It gives all orders through N−2.",
+        "The solver classified the 10,000 sampled four-bit tables. All 9,974 pair mixers in the sample passed through order 14. The proof supplies a four-bit table the sample missed that stops at three."
+      ],
+      "attribution": "The proof applies published group classification and group algorithms. Explicit examples and sample measurements are supplied by the project.",
+      "resources": [
+        {
+          "label": "Proofs and example tables",
+          "href": "library/algorithmic_prior_art.html",
+          "kind": "Proof"
+        },
+        {
+          "label": "All-orders solver",
+          "href": "library/group_mixing.py.html",
+          "kind": "Code"
+        }
+      ],
+      "sourceIds": [
+        "round-groups",
+        "fhl",
+        "unger"
+      ]
+    },
+    {
+      "id": "quadratic",
+      "branch": "algorithms",
+      "title": "Certify finite pairwise round counts",
+      "status": "Proved",
+      "provenance": "Corollary",
+      "summary": "Quadratic APN tables admit an explicit error bound from a derivative rank test.",
+      "body": [
+        "Test the degree and derivative ranks in O(N n²) word operations. For a certified table, the worst pairwise TV is at most ½√((N−2)/N^(r−1)) after r rounds.",
+        "The proof computes the lengths of rows and their overlaps. A weaker bound from row and column support applies even to nonquadratic APN permutations."
+      ],
+      "attribution": "O’Connor used this Gram matrix and gave a three-bit example. The all-width specialization draws on the published hyperplane geometry of crooked functions.",
+      "resources": [
+        {
+          "label": "Rank test and exact chi-squared distance",
+          "href": "library/quadratic_certificate.html",
+          "kind": "Proof"
+        },
+        {
+          "label": "Certificate program",
+          "href": "library/quadratic_mixing.py.html",
+          "kind": "Code"
+        }
+      ],
+      "sourceIds": [
+        "oc95",
+        "crooked",
+        "ltv"
+      ]
+    },
+    {
+      "id": "inverse-triples",
+      "branch": "algorithms",
+      "title": "A three-round certificate for triples",
+      "status": "Proved",
+      "provenance": "Corollary",
+      "summary": "If a table differs from field inversion at h entries, every starting triple is within (7+6h)/N of uniform after three rounds.",
+      "body": [
+        "For the inverse on five bits the bound is 7/32, already below 1/4. At eight bits up to nine table changes still fit the same threshold.",
+        "Projective linear maps act sharply transitively on ordered triples. Counting the maps realized by three translations and coupling back to finite field inversion gives the guarantee."
+      ],
+      "attribution": "The proof combines classical projective geometry with the published inverse-walk approximation. For the exact inverse the three-round distance is 7/N + O(1/N²) for every start. Priority of the explicit finite bound and perturbation certificate is unverified.",
+      "resources": [
+        {
+          "label": "Three-round guarantee and proof",
+          "href": "library/triple_rounds.html#an-explicit-certificate-for-triples",
+          "kind": "Proof"
+        },
+        {
+          "label": "Sharp three-round inverse rate",
+          "href": "library/inverse_triple_rate.html",
+          "kind": "Proof"
+        },
+        {
+          "label": "Check an inverse-like table",
+          "href": "library/inverse_triples.py.html",
+          "kind": "Code"
+        }
+      ],
+      "sourceIds": [
+        "inverse",
+        "ltv"
+      ]
+    },
+    {
+      "id": "random-triples",
+      "branch": "structure",
+      "title": "The three-round triple distance",
+      "status": "Open",
+      "provenance": "Open question",
+      "summary": "At seven bits the sampled median TV for one starting triple drops from 0.3745 after three rounds to 0.0372 after four.",
+      "body": [
+        "The experiment measures exact distances for (0,1,2) on 32 random tables per bit length, from four through seven bits.",
+        "Four rounds are optimal at TV 1/4. After three rounds the distance is between 1/3 and 1/2 up to vanishing error with high probability. Does it converge to exp(−1)?"
+      ],
+      "attribution": "The values are project measurements. The limiting three-round distance for a typical table remains open.",
+      "resources": [
+        {
+          "label": "Measurements and proof direction",
+          "href": "library/triple_rounds.html#what-a-random-table-does",
+          "kind": "Notes"
+        },
+        {
+          "label": "Exact fixed-start TV data",
+          "href": "library/results/triple_probe.csv",
+          "kind": "Data"
+        },
+        {
+          "label": "Triple experiment",
+          "href": "library/triple_probe.py.html",
+          "kind": "Code"
+        }
+      ],
+      "sourceIds": [
+        "ltv",
+        "layouts"
+      ]
+    },
+    {
+      "id": "four-round-triples",
+      "branch": "structure",
+      "title": "Four rounds for typical triples",
+      "status": "Proved",
+      "provenance": "Project derivation",
+      "summary": "At TV 1/4, a uniformly sampled table reused each round typically needs exactly four cipher rounds to mix triples.",
+      "body": [
+        "Compare two independent key paths that start at the same triple and share the same table. The chance their final shapes agree is N⁻² + O(N⁻³). This controls total variation distance for one start. Concentration over the random table makes the bound simultaneous over all starts.",
+        "A second finite calculation proves three rounds typically leave at least 1/3 minus a vanishing error in TV. The two bounds give the exact typical round count at every fixed threshold below 1/3. Independent enumerations check the computer-assisted steps."
+      ],
+      "attribution": "Computer-assisted project proof. The result concerns one unrestricted uniform public table reused across rounds. Publication priority remains unverified.",
+      "resources": [
+        {
+          "label": "Collision calculation and concentration proof",
+          "href": "library/triple_moment.html",
+          "kind": "Proof"
+        },
+        {
+          "label": "Three-round lower bound and exact mixing time",
+          "href": "library/triple_lower.html",
+          "kind": "Proof"
+        },
+        {
+          "label": "Reproduce the occupancy moments",
+          "href": "library/triple_lower.py.html",
+          "kind": "Code"
+        },
+        {
+          "label": "Reproduce the finite enumeration",
+          "href": "library/triple_moment.py.html",
+          "kind": "Code"
+        },
+        {
+          "label": "Compare fixed-start measurements",
+          "href": "library/triple_rounds.html#what-a-random-table-does",
+          "kind": "Notes"
+        }
+      ],
+      "sourceIds": [
+        "ltv",
+        "layouts"
+      ]
+    },
+    {
+      "id": "six-bit-count",
+      "branch": "counts",
+      "title": "The exact six-bit fraction",
+      "status": "Open",
+      "provenance": "Open question",
+      "summary": "The recurrence counts all preserved coset partitions. Which other six-bit permutations fail, and how many are there?",
+      "body": [
+        "Primitive groups can still fail to mix pairs at six bits, as the explicit two-coordinate example shows. A complete count must handle these cases and avoid double-counting permutations with several descriptions."
+      ],
+      "attribution": "The six-bit gap concerns the exact finite count. The leading asymptotic and the count for every imprimitive table are available.",
+      "resources": [
+        {
+          "label": "Recurrence for coset partitions",
+          "href": "library/five_bit_count.html",
+          "kind": "Proof"
+        },
+        {
+          "label": "Primitive six-bit example",
+          "href": "library/larger_bits.html#a-six-bit-counterexample",
+          "kind": "Proof"
+        }
+      ],
+      "sourceIds": [
+        "blocks"
+      ]
+    },
+    {
+      "id": "four-input-rates",
+      "branch": "structure",
+      "title": "How many rounds for four inputs?",
+      "status": "Open",
+      "provenance": "Open question",
+      "summary": "Typical tables need three rounds for pairs and four for triples at TV 1/4. Does a similar rule hold for quadruples?",
+      "body": [
+        "Ordered quadruples on binary vectors can form an affine plane or be affinely independent. A worst-start result must cover both kinds.",
+        "The field inverse already shows that fast triple mixing can coexist with very slow quadruple mixing. The open question here concerns a typical uniform fixed table or a checkable sufficient condition on an individual table."
+      ],
+      "attribution": "The inverse lower bound is published. A general finite-round quadruple criterion and the typical round count are open in this project.",
+      "resources": [
+        {
+          "label": "Research agenda and literature",
+          "href": "library/literature_review.html#outstanding-work",
+          "kind": "Notes"
+        },
+        {
+          "label": "Three-bit measurements for quadruples",
+          "href": "library/higher_census.html",
+          "kind": "Notes"
+        }
+      ],
+      "sourceIds": [
+        "ltv",
+        "inverse",
+        "layouts"
+      ]
     }
   ],
   "sources": [
@@ -525,10 +857,66 @@ window.ATLAS = {
       "year": "1971",
       "url": "https://doi.org/10.1145/800157.805047",
       "note": "Establishes the foundational satisfiability hardness result used as the starting problem for the project’s circuit reduction."
+    },
+    {
+      "id": "oc94",
+      "title": "A Unified Markov Approach to Differential and Linear Cryptanalysis",
+      "authors": "Luke O’Connor and Jovan Dj. Golić",
+      "year": "1994",
+      "url": "https://doi.org/10.1007/BFb0000450",
+      "note": "The density calculation and explicit random-graph assumption are in §3."
+    },
+    {
+      "id": "oc95",
+      "title": "Convergence in Differential Distributions",
+      "authors": "Luke O’Connor",
+      "year": "1995",
+      "url": "https://doi.org/10.1007/3-540-49264-X_2",
+      "note": "Reports the three-bit APN census, studies the row Gram matrix, and computes the inverse example."
+    },
+    {
+      "id": "crooked",
+      "title": "Crooked Functions, Bent Functions, and Distance Regular Graphs",
+      "authors": "T. D. Bending and D. Fon-Der-Flaass",
+      "year": "1998",
+      "url": "https://doi.org/10.37236/1372",
+      "note": "Establishes the derivative hyperplane geometry used in the quadratic certificate."
+    },
+    {
+      "id": "generation",
+      "title": "The Probability of Generating the Symmetric Group When One of the Generators Is Random",
+      "authors": "László Babai and Thomas P. Hayes",
+      "year": "2006",
+      "url": "https://www.cs.unm.edu/~hayes/papers/OneRandom/OneRandom.pdf",
+      "note": "Adjoin one random permutation to a group with few common fixed points."
+    },
+    {
+      "id": "fhl",
+      "title": "Polynomial-Time Algorithms for Permutation Groups",
+      "authors": "Merrick Furst, John Hopcroft and Eugene Luks",
+      "year": "1980",
+      "url": "https://doi.org/10.1109/SFCS.1980.34",
+      "note": "Supplies polynomial-time group operations for the exact all-orders decision."
+    },
+    {
+      "id": "unger",
+      "title": "Fast Detection of Giant Permutation Groups",
+      "authors": "William R. Unger",
+      "year": "2019",
+      "url": "https://arxiv.org/abs/1905.09431",
+      "note": "Cycle-type criteria recognize large permutation groups."
+    },
+    {
+      "id": "layouts",
+      "title": "Layout Graphs, Random Walks and the t-wise Independence of SPN Block Ciphers",
+      "authors": "Tianren Liu, Angelos Pelecanos, Stefano Tessaro and Vinod Vaikuntanathan",
+      "year": "2023",
+      "url": "https://eprint.iacr.org/2024/083",
+      "note": "Treats equality constraints across tuples in an SPN and identifies where independent random substitutions enter."
     }
   ],
   "snapshot": {
     "date": "2026-11-18",
-    "revision": "ae516d1dfc"
+    "revision": "0932ba3b03"
   }
 };

@@ -21,11 +21,20 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 DIST = HERE / "dist"
 CATALOG = HERE / "topics.json"
-DOCUMENTS = ("README.md", "FOUR_BIT_COUNT.md", "LARGER_BITS.md", "CIRCUIT_INPUT.md", "FAST_TABLE_PROOF.md")
+DOCUMENTS = (
+    "README.md", "FOUR_BIT_COUNT.md", "LARGER_BITS.md", "CIRCUIT_INPUT.md", "FAST_TABLE_PROOF.md",
+    "research/LITERATURE_REVIEW.md", "research/GROUP_COUNTS.md", "research/FIVE_BIT_COUNT.md",
+    "research/ALGORITHMIC_PRIOR_ART.md", "research/HIGHER_CENSUS.md", "research/RATES_AND_LITERATURE.md",
+    "research/QUADRATIC_CERTIFICATE.md", "research/TRIPLE_ROUNDS.md",
+    "research/TRIPLE_MOMENT.md", "research/TRIPLE_LOWER.md", "research/INVERSE_TRIPLE_RATE.md",
+)
 PROGRAMS = ("mixing.py", "exact_four_bit.py", "four_bit_obstructions.py", "sample_four_bit.py",
-            "verify_rate_bins.py", "classify_mixing.py", "fast_mixing.py", "parallel_mixing.c", "parity_screen.py")
+            "verify_rate_bins.py", "classify_mixing.py", "fast_mixing.py", "parallel_mixing.c", "parity_screen.py",
+            "group_mixing.py", "higher_census.py", "quadratic_mixing.py", "inverse_triples.py",
+            "research/group_counts.py", "research/triple_moment.py", "research/triple_lower.py", "research/triple_probe.py", "research/rate_probe.py")
 DATA = ("results/summary.csv", "results/permutations.csv", "results/four_bit/summary.json",
-        "results/four_bit/samples.csv", "results/four_bit/convergence.png")
+        "results/four_bit/samples.csv", "results/four_bit/convergence.png",
+        "results/higher_three_bit.csv", "results/triple_probe.csv")
 COMPRESS = {"results/permutations.csv", "results/four_bit/samples.csv"}
 
 
@@ -33,7 +42,7 @@ def asset_url(source):
     if source in DOCUMENTS:
         return "library/" + Path(source).stem.lower() + ".html"
     if source in PROGRAMS:
-        return "library/" + source + ".html"
+        return "library/" + Path(source).name + ".html"
     if source in DATA:
         return "library/" + source + (".gz" if source in COMPRESS else "")
     if source in ("research-atlas/", "research-atlas/dist/index.html"):
@@ -41,13 +50,16 @@ def asset_url(source):
     raise ValueError(f"No atlas asset for repository link {source}")
 
 
-def local_link(href, relative_to=""):
+def local_link(href, relative_to="", source_dir=""):
     url = urlsplit(href)
     if url.scheme in ("http", "https", "mailto") or not url.path:
         return href
     if url.scheme or url.netloc:
         raise ValueError(f"Unsupported link {href}")
-    target = posixpath.relpath(asset_url(url.path), relative_to or ".")
+    path = posixpath.normpath(posixpath.join(source_dir, url.path))
+    if path == "research-atlas":
+        path += "/"
+    target = posixpath.relpath(asset_url(path), relative_to or ".")
     return target + ("#" + url.fragment if url.fragment else "")
 
 
@@ -108,13 +120,13 @@ def render_document(filename, source, url):
                                  extra_args=["--mathml", "--wrap=none", "--no-highlight"])
     def rewrite(match):
         attr, href = match.groups()
-        return f'{attr}="{html.escape(local_link(html.unescape(href), "library"), quote=True)}"'
+        return f'{attr}="{html.escape(local_link(html.unescape(href), "library", posixpath.dirname(filename)), quote=True)}"'
     body = re.sub(r'\b(href|src)="([^"]*)"', rewrite, body)
     headings = [(anchor, html.unescape(re.sub("<[^>]+>", "", label)))
                 for anchor, label in re.findall(r'<h2 id="([^"]+)">(.*?)</h2>', body, re.S)]
     title = source.splitlines()[0].removeprefix("# ")
-    write_output(url, reader_page(title, body, filename, "Research note", headings))
-    write_output("library/raw/" + filename, source)
+    write_output(url, reader_page(title, body, Path(filename).name, "Research note", headings))
+    write_output("library/raw/" + Path(filename).name, source)
 
 
 def catalog_for_site(data, fields):
@@ -145,8 +157,8 @@ def main():
             render_document(name, content.decode(), asset_url(name))
         elif name in PROGRAMS:
             markup = f"<h1>{html.escape(name)}</h1><pre><code>{html.escape(content.decode())}</code></pre>"
-            write_output(asset_url(name), reader_page(name, markup, name, "Source code"))
-            write_output("library/raw/" + name, content)
+            write_output(asset_url(name), reader_page(name, markup, Path(name).name, "Source code"))
+            write_output("library/raw/" + Path(name).name, content)
         else:
             write_output(asset_url(name), gzip.compress(content, mtime=0) if name in COMPRESS else content)
     # A renamed section in a proof must surface before a refreshed topic links to it.

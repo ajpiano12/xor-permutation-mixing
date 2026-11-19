@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#122f35"><title>group_mixing.py · Difference Atlas</title>
+<link rel="icon" href="../mark.svg"><link rel="stylesheet" href="../reader.css"></head>
+<body><a class="skip" href="#document">Skip to document</a><header><div class="bar">
+<a class="brand" href="../index.html#map"><img src="../mark.svg" width="33" height="33" alt="">Difference Atlas</a>
+<nav aria-label="Atlas"><a href="../index.html#map">Research map</a><a href="../index.html#library">Proof library</a></nav>
+</div></header><div class="layout"><aside><div class="meta">Source code</div>
+<p class="filename">group_mixing.py</p><a download="group_mixing.py" href="raw/group_mixing.py">Download source</a></aside>
+<main id="document" tabindex="-1"><h1>group_mixing.py</h1><pre><code># /// script
+# requires-python = &quot;&gt;=3.10&quot;
+# dependencies = [&quot;sympy==1.14.0&quot;]
+# ///
+&quot;&quot;&quot;Determine the largest tuple order that mixes from a permutation truth table.&quot;&quot;&quot;
+
+import argparse
+import json
+from math import factorial, isqrt
+
+from sympy.combinatorics import Permutation, PermutationGroup
+
+from classify_mixing import add_table_arguments, read_table_arguments, validated_table
+
+
+def giant_witness(p):
+    &quot;&quot;&quot;Find a long prime cycle in one of the first sixteen actual round permutations.&quot;&quot;&quot;
+    size = len(p)
+    for key in range(min(size, 16)):
+        seen = bytearray(size)
+        for x in range(size):
+            if seen[x]:
+                continue
+            length = 0
+            y = x
+            while not seen[y]:
+                seen[y] = 1
+                y = p[y ^ key]
+                length += 1
+            if size // 2 &lt; length &lt; size - 2:
+                if all(length % d for d in range(2, isqrt(length) + 1)):
+                    return {&quot;key&quot;: key, &quot;cycle_start&quot;: x, &quot;prime_length&quot;: length}
+    return None
+
+
+def group_profile(permutation):
+    &quot;&quot;&quot;Return maximum mixing order, with a group-order formula for large alternating groups.&quot;&quot;&quot;
+    p = validated_table(permutation)
+    size = len(p)
+    bits = size.bit_length() - 1
+    witness = giant_witness(p) if size &gt;= 8 else None
+    if witness:
+        # The transitive ambient group contains A_N by Jordan. Its normal
+        # closure of translations is exactly A_N by parity and simplicity.
+        order = factorial(size) // 2 if size &lt; 1024 else f&quot;{size}!/2&quot;
+        return {&quot;bits&quot;: bits, &quot;degree&quot;: size, &quot;mixes_through&quot;: size - 2,
+                &quot;closure_order&quot;: order, &quot;closure_is_alternating&quot;: True, &quot;cycle_witness&quot;: witness}
+    step = Permutation(list(p))
+    layer = [Permutation([x ^ (1 &lt;&lt; i) for x in range(size)]) for i in range(bits)]
+    closure = PermutationGroup(layer)
+    # Every layer consists of the basis translations conjugated by one more
+    # power of P. Once it adds nothing, conjugation preserves the whole group.
+    while True:
+        layer = [g ^ step for g in layer]
+        additions = [g for g in layer if not closure.contains(g)]
+        if not additions:
+            break
+        closure = PermutationGroup(closure.generators + additions)
+
+    order = int(closure.order())
+    # The first k base points have one orbit on ordered k-tuples exactly
+    # while their successive orbit sizes attain N, N-1, ... .
+    max_t = 0
+    for orbit in closure.basic_orbits:
+        if len(orbit) != size - max_t:
+            break
+        max_t += 1
+    if max_t == size - 1:
+        # One remaining unused point is uniquely determined.
+        max_t = size
+    alternating = bits &gt;= 2 and max_t == size - 2
+    if alternating and size &gt;= 1024:
+        order = f&quot;{size}!/2&quot;
+    elif order.bit_length() &gt; 12000:
+        # Keep an exact, compact expression even on Python builds with decimal digit limits.
+        order = &quot; * &quot;.join(str(len(orbit)) for orbit in closure.basic_orbits)
+    return {&quot;bits&quot;: bits, &quot;degree&quot;: size, &quot;mixes_through&quot;: max_t,
+            &quot;closure_order&quot;: order, &quot;closure_is_alternating&quot;: alternating}
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    add_table_arguments(parser)
+    args = parser.parse_args()
+    try:
+        result = group_profile(read_table_arguments(parser, args))
+    except ValueError as exc:
+        parser.error(str(exc))
+    print(json.dumps(result))
+
+
+if __name__ == &quot;__main__&quot;:
+    main()
+</code></pre></main></div></body></html>

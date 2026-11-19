@@ -92,7 +92,7 @@
       const open = isFiltering ? !foldedMatches.has(branch.id) : expanded.has(branch.id);
       rows.push('<div class="tree-branch" data-branch="' + esc(branch.id) + '"><button class="branch-heading" type="button" data-toggle="' + esc(branch.id) + '" aria-expanded="' + open + '" aria-controls="children-' + esc(branch.id) + '"><span class="branch-icon">' + icon(branch.id) + '</span><span class="branch-name">' + esc(branch.title) + '</span><span class="branch-count" aria-label="' + matches.length + ' topics">' + matches.length + '</span>' + icon("chevron", "chevron") + '</button><div class="branch-topics" id="children-' + esc(branch.id) + '"' + (open ? '' : ' hidden') + '>' + matches.map(node).join("") + '</div></div>');
     }
-    const root = '<div class="tree-root"><span class="root-icon">' + icon("tree") + '</span><span class="root-text"><span class="root-title">Pairwise mixing</span><span class="root-caption">' + topics.length + ' research topics</span></span></div>';
+    const root = '<div class="tree-root"><span class="root-icon">' + icon("tree") + '</span><span class="root-text"><span class="root-title">t-wise mixing</span><span class="root-caption">' + topics.length + ' research topics</span></span></div>';
     tree.innerHTML = root + '<div class="tree-branches">' + rows.join("") + '</div>' + (!count ? '<div class="empty-state">No topics match your filters. <button type="button" data-clear-search>Clear filters</button></div>' : "");
     const result = document.getElementById("search-count");
     if (result) result.textContent = isFiltering ? count + (count === 1 ? " matching topic" : " matching topics") : "";

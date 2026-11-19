@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#122f35"><title>research/triple_probe.py · Difference Atlas</title>
+<link rel="icon" href="../mark.svg"><link rel="stylesheet" href="../reader.css"></head>
+<body><a class="skip" href="#document">Skip to document</a><header><div class="bar">
+<a class="brand" href="../index.html#map"><img src="../mark.svg" width="33" height="33" alt="">Difference Atlas</a>
+<nav aria-label="Atlas"><a href="../index.html#map">Research map</a><a href="../index.html#library">Proof library</a></nav>
+</div></header><div class="layout"><aside><div class="meta">Source code</div>
+<p class="filename">triple_probe.py</p><a download="triple_probe.py" href="raw/triple_probe.py">Download source</a></aside>
+<main id="document" tabindex="-1"><h1>research/triple_probe.py</h1><pre><code>&quot;&quot;&quot;Measure exact fixed-start triple distances for a seeded sample of fixed tables.&quot;&quot;&quot;
+import argparse
+import csv
+from fractions import Fraction
+from pathlib import Path
+from random import Random
+
+import numpy as np
+
+
+def triple_distances(p, steps=3):
+    size = len(p)
+    if steps &lt; 0 or size ** steps * size ** 2 * 2 &gt; np.iinfo(np.int64).max:
+        raise ValueError(&quot;The exact integer TV numerator must fit in 64 bits&quot;)
+    x = np.arange(size)
+    table = np.array(p)
+    inverse = np.argsort(table)
+    predecessors = [inverse[table[k] ^ x] ^ k for k in range(size)]
+    states = (size - 1) * (size - 2)
+    valid = (x[:, None] != x) &amp; (x[:, None] != 0) &amp; (x != 0)
+    counts = np.zeros((size, size), dtype=np.int64)
+    counts[1, 2] = 1
+    distances = []
+    for step in range(1, steps + 1):
+        new = np.zeros_like(counts)
+        for index in predecessors:
+            new += counts[np.ix_(index, index)]
+        counts = new
+        keys = size ** step
+        assert counts.sum() == keys
+        numerator = int(np.abs(states * counts[valid] - keys).sum())
+        distances.append(Fraction(numerator, 2 * states * keys))
+    return distances
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(&quot;--bits&quot;, nargs=&quot;+&quot;, type=int, default=[4, 5, 6, 7])
+    parser.add_argument(&quot;--draws&quot;, type=int, default=32)
+    parser.add_argument(&quot;--seed&quot;, type=int, default=20261118)
+    parser.add_argument(&quot;--output&quot;, type=Path, default=Path(&quot;results/triple_probe.csv&quot;))
+    args = parser.parse_args()
+    if any(n &lt; 2 or n &gt; 12 for n in args.bits) or args.draws &lt; 1:
+        parser.error(&quot;choose 2 to 12 bits and a positive sample size&quot;)
+    with args.output.open(&quot;w&quot;, newline=&quot;&quot;) as f:
+        out = csv.writer(f, lineterminator=&quot;\n&quot;)
+        out.writerow([&quot;bits&quot;, &quot;draw&quot;, &quot;seed&quot;, &quot;input_tuple&quot;, &quot;cipher_rounds&quot;, &quot;tv_exact&quot;])
+        for n in args.bits:
+            rng = Random((args.seed &lt;&lt; 8) | n)
+            for draw in range(1, args.draws + 1):
+                p = list(range(1 &lt;&lt; n))
+                rng.shuffle(p)
+                for r, tv in enumerate(triple_distances(p), 2):
+                    out.writerow([n, draw, args.seed, &quot;0 1 2&quot;, r, str(tv)])
+
+
+if __name__ == &quot;__main__&quot;:
+    main()
+</code></pre></main></div></body></html>

@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#122f35"><title>quadratic_mixing.py · Difference Atlas</title>
+<link rel="icon" href="../mark.svg"><link rel="stylesheet" href="../reader.css"></head>
+<body><a class="skip" href="#document">Skip to document</a><header><div class="bar">
+<a class="brand" href="../index.html#map"><img src="../mark.svg" width="33" height="33" alt="">Difference Atlas</a>
+<nav aria-label="Atlas"><a href="../index.html#map">Research map</a><a href="../index.html#library">Proof library</a></nav>
+</div></header><div class="layout"><aside><div class="meta">Source code</div>
+<p class="filename">quadratic_mixing.py</p><a download="quadratic_mixing.py" href="raw/quadratic_mixing.py">Download source</a></aside>
+<main id="document" tabindex="-1"><h1>quadratic_mixing.py</h1><pre><code>&quot;&quot;&quot;Certify a pairwise round bound for a quadratic APN permutation table.&quot;&quot;&quot;
+import argparse
+from fractions import Fraction
+import json
+
+from classify_mixing import add_table_arguments, read_table_arguments, validated_table
+
+
+def has_certificate(permutation):
+    p = validated_table(permutation)
+    n = len(p).bit_length() - 1
+    coefficients = list(p)
+    for bit in (1 &lt;&lt; i for i in range(n)):
+        for x in range(len(p)):
+            if x &amp; bit:
+                coefficients[x] ^= coefficients[x ^ bit]
+    if any(c and index.bit_count() &gt; 2 for index, c in enumerate(coefficients)):
+        return False
+    for a in range(1, len(p)):
+        pivots = [0] * n
+        rank = 0
+        origin = p[0] ^ p[a]
+        for i in range(n):
+            vector = origin ^ p[1 &lt;&lt; i] ^ p[(1 &lt;&lt; i) ^ a]
+            while vector:
+                j = vector.bit_length() - 1
+                if not pivots[j]:
+                    pivots[j] = vector
+                    rank += 1
+                    break
+                vector ^= pivots[j]
+        if rank != n - 1:
+            return False
+    return True
+
+
+def sufficient_rounds(size, epsilon):
+    &quot;&quot;&quot;Solve (N-2)/N^(r-1) &lt;= 4 epsilon^2 without floating-point rounding.&quot;&quot;&quot;
+    rounds = 1
+    left = (size - 2) * epsilon.denominator**2
+    right = 4 * epsilon.numerator**2
+    while left &gt; right:
+        right *= size
+        rounds += 1
+    return rounds
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    add_table_arguments(parser)
+    parser.add_argument(&quot;--epsilon&quot;, type=Fraction, default=Fraction(1, 4))
+    args = parser.parse_args()
+    if not 0 &lt; args.epsilon &lt; 1:
+        parser.error(&quot;epsilon must be between zero and one&quot;)
+    p = read_table_arguments(parser, args)
+    try:
+        proved = has_certificate(p)
+    except ValueError as exc:
+        parser.error(str(exc))
+    print(json.dumps({&quot;certified&quot;: proved, &quot;epsilon&quot;: str(args.epsilon),
+                      &quot;sufficient_cipher_rounds&quot;: sufficient_rounds(len(p), args.epsilon) if proved else None}))
+
+
+if __name__ == &quot;__main__&quot;:
+    main()
+</code></pre></main></div></body></html>

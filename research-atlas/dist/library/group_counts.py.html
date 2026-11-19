@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#122f35"><title>research/group_counts.py · Difference Atlas</title>
+<link rel="icon" href="../mark.svg"><link rel="stylesheet" href="../reader.css"></head>
+<body><a class="skip" href="#document">Skip to document</a><header><div class="bar">
+<a class="brand" href="../index.html#map"><img src="../mark.svg" width="33" height="33" alt="">Difference Atlas</a>
+<nav aria-label="Atlas"><a href="../index.html#map">Research map</a><a href="../index.html#library">Proof library</a></nav>
+</div></header><div class="layout"><aside><div class="meta">Source code</div>
+<p class="filename">group_counts.py</p><a download="group_counts.py" href="raw/group_counts.py">Download source</a></aside>
+<main id="document" tabindex="-1"><h1>research/group_counts.py</h1><pre><code>&quot;&quot;&quot;Exact arithmetic for the coset probabilities and five-bit pairwise bounds.&quot;&quot;&quot;
+
+import argparse
+from decimal import Decimal, localcontext
+from fractions import Fraction
+from math import comb, factorial, prod
+
+
+def gaussian(n, k):
+    &quot;&quot;&quot;Number of k-spaces in the n-dimensional binary vector space.&quot;&quot;&quot;
+    return prod(2**n - 2**i for i in range(k)) // prod(2**k - 2**i for i in range(k))
+
+
+def cell_permutations(n, codimension):
+    cells = 2**codimension
+    return factorial(2 ** (n - codimension)) ** cells
+
+
+def parity_union_count(n):
+    # Möbius coefficient of a d-space in the full lattice of masks.
+    return sum(
+        (-1) ** (d + 1) * 2 ** (d * (d - 1) // 2) * gaussian(n, d)
+        * 2**d * cell_permutations(n, d)
+        for d in range(1, n + 1)
+    )
+
+
+def quotient_coefficients(degree):
+    coeffs = [0]
+    for k in range(1, degree + 1):
+        earlier = sum(gaussian(k, d) * coeffs[d] * cell_permutations(k, d)
+                      for d in range(1, k))
+        coeffs.append(factorial(2**k) - earlier)
+    return coeffs
+
+
+def five_bit_bounds():
+    n, size = 5, 32
+    gl = prod(size - 2**i for i in range(n))
+    singer = size * gl * ((size - 2) // n) // (size - 1)
+    low = parity_union_count(n) + singer
+    remaining = sum(gaussian(n, d) * factorial(2**d) * cell_permutations(n, d)
+                    for d in (2, 3, 4))
+    return Fraction(low, factorial(size)), Fraction(low + remaining, factorial(size))
+
+
+def simple_counts(bits):
+    &quot;&quot;&quot;Count normalized nonlinear-simple and linear-simple maps by dimension.&quot;&quot;&quot;
+    coeffs = quotient_coefficients(bits)
+    # A(z) = 1 - sum a[d] z^d. R(z) = -z A&#x27;(z)/A(z).
+    a, r = [Fraction(0)], [Fraction(0)]
+    irreducibles, counts = [0], [(0, 0)]
+    for d in range(1, bits + 1):
+        size = 2**d
+        gl = prod(size - 2**i for i in range(d))
+        a.append(Fraction(coeffs[d], size * gl))
+        r.append(d * a[d] + sum(a[i] * r[d - i] for i in range(1, d)))
+        nonlinear = (r[d] - 1) * gl / d
+        assert nonlinear.denominator == 1
+        smaller = sum(i * irreducibles[i] for i in range(1, d) if d % i == 0)
+        irreducibles.append((size - smaller) // d)
+        linear = 1 if d == 1 else gl * irreducibles[d] // (size - 1)
+        counts.append((int(nonlinear), linear))
+    return counts
+
+
+def scientific(fraction):
+    with localcontext() as context:
+        context.prec = 40
+        return f&quot;{Decimal(fraction.numerator) / Decimal(fraction.denominator):.17E}&quot;
+
+
+if __name__ == &quot;__main__&quot;:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(&quot;--bits&quot;, type=int, default=5, help=&quot;last dimension for exact block-system counts&quot;)
+    bits = parser.parse_args().bits
+    if bits &lt; 1:
+        parser.error(&quot;bits must be positive&quot;)
+    print(&quot;Quotient coefficients c1 through c4:&quot;, quotient_coefficients(4)[1:])
+    for n in (3, 4, 5, 6, 7):
+        npoints = 2**n
+        parity = Fraction(parity_union_count(n), factorial(npoints))
+        leading = Fraction(2 * (npoints - 1), comb(npoints, npoints // 2))
+        print(f&quot;n={n}  exact parity-union probability {scientific(parity)}  &quot;
+              f&quot;leading expression {scientific(leading)}&quot;)
+    lower, upper = five_bit_bounds()
+    print(f&quot;Five-bit pairwise failure interval [{scientific(lower)}, {scientific(upper)}]&quot;)
+    assert parity_union_count(3) == 7232
+    assert parity_union_count(4) == 48_678_419_456
+    assert quotient_coefficients(3) == [0, 2, 0, 32_256]
+    for d, (nonlinear, linear) in enumerate(simple_counts(bits)[1:], 1):
+        size = 2**d
+        total = factorial(size)
+        imprimitive = total - size * (nonlinear + linear)
+        # At high dimension the exact integer can exceed Python&#x27;s decimal-string limit.
+        count_text = str(imprimitive) if imprimitive.bit_length() &lt; 12_000 else f&quot;{imprimitive.bit_length()}-bit integer&quot;
+        print(f&quot;n={d}  permutations preserving a proper nonzero coset partition: {count_text}&quot;
+              f&quot;  probability {scientific(Fraction(imprimitive, total))}&quot;)
+        if d in (3, 4, 5):
+            fail = total - size * nonlinear
+            print(f&quot;     pairwise failures {fail} / {total} = {scientific(Fraction(fail, total))}&quot;)
+            if d == 3:
+                assert size * nonlinear == 32_256
+            if d == 4:
+                assert size * nonlinear == 20_873_902_694_400
+            if d == 5:
+                assert lower &lt; Fraction(fail, total) &lt; upper
+</code></pre></main></div></body></html>
