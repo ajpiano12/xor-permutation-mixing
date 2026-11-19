@@ -12,7 +12,8 @@ ROOT = SITE.parent
 
 def source_signature():
     files = [SITE / "topics.json", SITE / "build.py"]
-    for pattern in ("*.md", "*.py", "*.c", "research/*.md", "research/*.py", "results/*.csv", "results/four_bit/*"):
+    for pattern in ("*.md", "*.py", "*.c", "research/*.md", "research/*.py", "results/*.csv",
+                    "results/*.pdf", "results/*.json", "results/four_bit/*"):
         files.extend(path for path in ROOT.glob(pattern) if path.is_file())
     return tuple((p, p.stat().st_mtime_ns, p.stat().st_size) for p in sorted(files))
 

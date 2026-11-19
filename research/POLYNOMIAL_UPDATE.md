@@ -1,5 +1,7 @@
 # A degree-15 update for four-input mixing
 
+The sharper sweep analysis certifies **36 rounds at width 16** and **57 at width 12** on 128-bit words for every degree-15 control polynomial at tuple order four and TV $2^{-128}$. The calculations below derive the polynomial criterion and give the earlier two-sweep bounds. [Sharper proof](WARMUP_BOUNDS.md)
+
 On 128 bits, a fixed public permutation built from the field map $z\mapsto z^{15}$ takes **every ordered quadruple** within total variation $2^{-128}$ of uniform after **89 rounds** with a 12-bit update. A 16-bit update gives **97 rounds**. Both are sufficient bounds for independent uniform XOR keys. Changing the update width changes the public permutation.
 
 | Update width $b$ | Irreducible control-field modulus | Rounds for $2^{-32}$ | Rounds for $2^{-64}$ | Rounds for $2^{-128}$ |

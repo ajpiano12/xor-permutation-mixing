@@ -41,6 +41,11 @@ window.ATLAS = {
       "attribution": "The project brief supplies the model and allows any positive error target. This research assessment links each construction to its own evidence and priority review.",
       "resources": [
         {
+          "label": "Illustrated teammate brief (PDF)",
+          "href": "library/results/progress-brief.pdf",
+          "kind": "Brief"
+        },
+        {
           "label": "Read the results against the brief",
           "href": "library/brief_and_progress.html",
           "kind": "Notes"
@@ -67,13 +72,23 @@ window.ATLAS = {
       "title": "A checkable four-input construction",
       "status": "Proved",
       "provenance": "Project derivation",
-      "summary": "One specified 128-bit permutation certifies triples in 65 rounds and quadruples in 81 rounds at TV 2⁻¹²⁸.",
+      "summary": "One specified 128-bit permutation certifies triples in 34 rounds and quadruples in 36 rounds at TV 2⁻¹²⁸.",
       "body": [
         "XOR a 16-bit projection of a field inverse into the low block, then rotate. Fresh XOR keys translate the arguments of this same update on every round.",
         "The proof bounds parity biases for the translated update and compares two sweeps with independent switch decisions. At error 2⁻ⁿ the construction needs O(t) rounds for all sufficiently large widths and 2 ≤ t ≤ n/2 − 1, choosing the block width for the desired order."
       ],
       "attribution": "Niederreiter and Winterhof proved the exact shifted-inverse character estimate in 2000. The round bound for this specified permutation is a project derivation whose publication priority remains unverified.",
       "resources": [
+        {
+          "label": "Why 36 rounds suffice",
+          "href": "library/warmup_bounds.html",
+          "kind": "Proof"
+        },
+        {
+          "label": "Sharper round verifier",
+          "href": "library/sweep_bounds.py.html",
+          "kind": "Code"
+        },
         {
           "label": "Construction, two-sweep proof and 10-round lower bound",
           "href": "library/spectral_certificate.html",
@@ -98,13 +113,18 @@ window.ATLAS = {
       "title": "Four inputs with a degree-15 update",
       "status": "Proved",
       "provenance": "Project derivation",
-      "summary": "Any degree-15 control polynomial gives an 89-round guarantee on 128 bits at TV 2⁻¹²⁸ with a 12-bit update.",
+      "summary": "Any degree-15 control polynomial gives a 36-round guarantee on 128 bits with a 16-bit update, or 57 rounds with a 12-bit update, at TV 2⁻¹²⁸.",
       "body": [
         "XOR 12 bits of the polynomial output into the low block and rotate. Choosing the fifteenth power gives an update with two field multiplications and three squarings.",
         "A weighted sum of four translates has a surviving coefficient of odd degree. This bounds the correlations among the three relative offsets for a quadruple."
       ],
       "attribution": "Makhul and Winterhof give the scalar trace argument. The MiMC paper considers degree 15 for Feistel rounds. The extension to a projected block update and the stated round count are project derivations with unverified priority.",
       "resources": [
+        {
+          "label": "Sharper sweep bounds",
+          "href": "library/warmup_bounds.html",
+          "kind": "Proof"
+        },
         {
           "label": "Polynomial criterion and finite bounds",
           "href": "library/polynomial_update.html",
@@ -120,6 +140,67 @@ window.ATLAS = {
         "polynomial-shifts",
         "mimc",
         "feistel"
+      ]
+    },
+    {
+      "id": "predict-pair-rates",
+      "branch": "counts",
+      "title": "Which tables mix faster?",
+      "status": "Measured",
+      "provenance": "Project experiment",
+      "summary": "A 12-step numerical probe predicts pairwise rounds at TV 2⁻¹²⁸ with mean error 0.56 rounds on four-bit holdouts and 1.38 on five-bit holdouts.",
+      "body": [
+        "Each validation set uses 256 fresh, uniformly sampled tables. Grouped predictions are compared with exact integer path counts for every starting pair.",
+        "An optional contraction bound gives a certified upper limit for a supplied table. A separate transform-based statistic screens a whole table at lower cost."
+      ],
+      "attribution": "Arnoldi iteration and Markov-chain contraction are published methods. The accuracy figures measure this experiment on its two held-out samples.",
+      "resources": [
+        {
+          "label": "Benchmark, assumptions and examples",
+          "href": "library/rate_heuristic.html",
+          "kind": "Notes"
+        },
+        {
+          "label": "Evaluate a table",
+          "href": "library/rate_heuristic.py.html",
+          "kind": "Code"
+        },
+        {
+          "label": "Held-out results",
+          "href": "library/results/rate_heuristic.json",
+          "kind": "Data"
+        }
+      ],
+      "sourceIds": [
+        "markov"
+      ]
+    },
+    {
+      "id": "slow-affine-rates",
+      "branch": "algorithms",
+      "title": "Two table changes can give extremely slow mixing",
+      "status": "Proved",
+      "provenance": "Project derivation",
+      "summary": "At TV 2⁻¹²⁸ the 16-bit example needs over 1.4 million rounds on pairs. Its 128-bit counterpart needs between 7.48 × 10³⁹ and 8.17 × 10³⁹ rounds on quadruples.",
+      "body": [
+        "Multiply by a primitive field element after swapping inputs 0 and 1. Most keys leave each input difference on its original deterministic path.",
+        "A separate O(n·2ⁿ) screen finds and checks affine approximations on supplied tables and can certify a necessary round count."
+      ],
+      "attribution": "The proof uses established Fourier and affine-correction methods. The finite bounds for this family are project derivations with unverified publication priority.",
+      "resources": [
+        {
+          "label": "Slow-family proof and bounds",
+          "href": "library/round_bounds.html",
+          "kind": "Proof"
+        },
+        {
+          "label": "Affine screen and verifier",
+          "href": "library/round_bounds.py.html",
+          "kind": "Code"
+        }
+      ],
+      "sourceIds": [
+        "markov"
       ]
     },
     {
@@ -1190,6 +1271,6 @@ window.ATLAS = {
   ],
   "snapshot": {
     "date": "2026-11-19",
-    "revision": "ac626ea68d"
+    "revision": "e49a2189ca"
   }
 };

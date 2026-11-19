@@ -1,0 +1,693 @@
+{
+  "4": {
+    "train_seed": 2026111908,
+    "holdout_seed": 2026111909,
+    "train_draws": 128,
+    "holdout_draws": 256,
+    "train_mixing": 128,
+    "holdout_mixing": 256,
+    "model": {
+      "log2_amplitude": 0.4585590940651052,
+      "baseline": {
+        "32": 26,
+        "64": 49,
+        "128": 96
+      },
+      "parity_medians": {
+        "4": {
+          "32": 25,
+          "64": 48,
+          "128": 94
+        },
+        "8": {
+          "32": 25,
+          "64": 48,
+          "128": 94
+        },
+        "12": {
+          "32": 36,
+          "64": 71,
+          "128": 140
+        }
+      }
+    },
+    "holdout": {
+      "32": {
+        "actual_min_median_max": [
+          20,
+          26.0,
+          48
+        ],
+        "metrics": {
+          "constant": {
+            "covered": 256,
+            "mae": 4.35546875,
+            "spearman": null,
+            "within_two_rounds": 105,
+            "max_abs_error": 22,
+            "underestimates": 114
+          },
+          "parity": {
+            "covered": 256,
+            "mae": 2.4296875,
+            "spearman": 0.6390892340679382,
+            "within_two_rounds": 170,
+            "max_abs_error": 23,
+            "underestimates": 101
+          },
+          "arnoldi": {
+            "covered": 256,
+            "mae": 0.37109375,
+            "spearman": 0.9887429784566213,
+            "within_two_rounds": 254,
+            "max_abs_error": 4,
+            "underestimates": 33
+          },
+          "certified": {
+            "covered": 256,
+            "mae": 6.52734375,
+            "spearman": 0.8864814181405627,
+            "within_two_rounds": 81,
+            "max_abs_error": 14,
+            "underestimates": 0
+          },
+          "certified_with_remainder": {
+            "covered": 256,
+            "mae": 1.82421875,
+            "spearman": 0.9884024343441755,
+            "within_two_rounds": 202,
+            "max_abs_error": 5,
+            "underestimates": 0
+          }
+        },
+        "prediction_bins": [
+          {
+            "lower": 20,
+            "n": 181,
+            "median_prediction": 24,
+            "actual_min": 20,
+            "actual_q25": 23.0,
+            "actual_median": 24,
+            "actual_q75": 26.0,
+            "actual_max": 30
+          },
+          {
+            "lower": 30,
+            "n": 69,
+            "median_prediction": 36,
+            "actual_min": 29,
+            "actual_q25": 34.0,
+            "actual_median": 36,
+            "actual_q75": 36.0,
+            "actual_max": 39
+          },
+          {
+            "lower": 40,
+            "n": 6,
+            "median_prediction": 40.5,
+            "actual_min": 39,
+            "actual_q25": 39.0,
+            "actual_median": 40.0,
+            "actual_q75": 42.5,
+            "actual_max": 48
+          }
+        ]
+      },
+      "64": {
+        "actual_min_median_max": [
+          38,
+          50.0,
+          94
+        ],
+        "metrics": {
+          "constant": {
+            "covered": 256,
+            "mae": 8.91796875,
+            "spearman": null,
+            "within_two_rounds": 55,
+            "max_abs_error": 45,
+            "underestimates": 132
+          },
+          "parity": {
+            "covered": 256,
+            "mae": 4.859375,
+            "spearman": 0.6381809827437473,
+            "within_two_rounds": 103,
+            "max_abs_error": 46,
+            "underestimates": 106
+          },
+          "arnoldi": {
+            "covered": 256,
+            "mae": 0.421875,
+            "spearman": 0.995713669210379,
+            "within_two_rounds": 255,
+            "max_abs_error": 9,
+            "underestimates": 38
+          },
+          "certified": {
+            "covered": 256,
+            "mae": 8.95703125,
+            "spearman": 0.9415861416154896,
+            "within_two_rounds": 5,
+            "max_abs_error": 18,
+            "underestimates": 0
+          },
+          "certified_with_remainder": {
+            "covered": 256,
+            "mae": 4.10546875,
+            "spearman": 0.9867053100582102,
+            "within_two_rounds": 27,
+            "max_abs_error": 11,
+            "underestimates": 0
+          }
+        },
+        "prediction_bins": [
+          {
+            "lower": 30,
+            "n": 9,
+            "median_prediction": 38,
+            "actual_min": 38,
+            "actual_q25": 38.0,
+            "actual_median": 39,
+            "actual_q75": 39.0,
+            "actual_max": 40
+          },
+          {
+            "lower": 40,
+            "n": 118,
+            "median_prediction": 45.0,
+            "actual_min": 40,
+            "actual_q25": 43.0,
+            "actual_median": 45.0,
+            "actual_q75": 47.0,
+            "actual_max": 51
+          },
+          {
+            "lower": 50,
+            "n": 61,
+            "median_prediction": 52,
+            "actual_min": 50,
+            "actual_q25": 51.0,
+            "actual_median": 52,
+            "actual_q75": 55.0,
+            "actual_max": 59
+          },
+          {
+            "lower": 60,
+            "n": 16,
+            "median_prediction": 63.5,
+            "actual_min": 59,
+            "actual_q25": 61.0,
+            "actual_median": 63.5,
+            "actual_q75": 67.5,
+            "actual_max": 75
+          },
+          {
+            "lower": 70,
+            "n": 49,
+            "median_prediction": 72,
+            "actual_min": 69,
+            "actual_q25": 70.0,
+            "actual_median": 71,
+            "actual_q75": 73.0,
+            "actual_max": 77
+          },
+          {
+            "lower": 80,
+            "n": 2,
+            "median_prediction": 82.5,
+            "actual_min": 80,
+            "actual_q25": 81.0,
+            "actual_median": 82.0,
+            "actual_q75": 83.0,
+            "actual_max": 84
+          },
+          {
+            "lower": 90,
+            "n": 1,
+            "median_prediction": 94,
+            "actual_min": 94,
+            "actual_q25": 94.0,
+            "actual_median": 94,
+            "actual_q75": 94.0,
+            "actual_max": 94
+          }
+        ]
+      },
+      "128": {
+        "actual_min_median_max": [
+          74,
+          97.5,
+          186
+        ],
+        "metrics": {
+          "constant": {
+            "covered": 256,
+            "mae": 18.09765625,
+            "spearman": null,
+            "within_two_rounds": 28,
+            "max_abs_error": 90,
+            "underestimates": 135
+          },
+          "parity": {
+            "covered": 256,
+            "mae": 9.86328125,
+            "spearman": 0.637849354301091,
+            "within_two_rounds": 58,
+            "max_abs_error": 92,
+            "underestimates": 116
+          },
+          "arnoldi": {
+            "covered": 256,
+            "mae": 0.5625,
+            "spearman": 0.9972806150115245,
+            "within_two_rounds": 248,
+            "max_abs_error": 21,
+            "underestimates": 38
+          },
+          "certified": {
+            "covered": 256,
+            "mae": 13.66015625,
+            "spearman": 0.968160065940032,
+            "within_two_rounds": 0,
+            "max_abs_error": 26,
+            "underestimates": 0
+          },
+          "certified_with_remainder": {
+            "covered": 256,
+            "mae": 8.609375,
+            "spearman": 0.9849342422968628,
+            "within_two_rounds": 0,
+            "max_abs_error": 20,
+            "underestimates": 0
+          }
+        },
+        "prediction_bins": [
+          {
+            "lower": 70,
+            "n": 13,
+            "median_prediction": 75,
+            "actual_min": 74,
+            "actual_q25": 75.0,
+            "actual_median": 75,
+            "actual_q75": 77.0,
+            "actual_max": 79
+          },
+          {
+            "lower": 80,
+            "n": 67,
+            "median_prediction": 86,
+            "actual_min": 79,
+            "actual_q25": 82.0,
+            "actual_median": 85,
+            "actual_q75": 87.0,
+            "actual_max": 89
+          },
+          {
+            "lower": 90,
+            "n": 60,
+            "median_prediction": 94.0,
+            "actual_min": 88,
+            "actual_q25": 92.0,
+            "actual_median": 94.0,
+            "actual_q75": 97.0,
+            "actual_max": 100
+          },
+          {
+            "lower": 100,
+            "n": 38,
+            "median_prediction": 103.0,
+            "actual_min": 100,
+            "actual_q25": 101.25,
+            "actual_median": 103.5,
+            "actual_q75": 106.0,
+            "actual_max": 109
+          },
+          {
+            "lower": 110,
+            "n": 12,
+            "median_prediction": 114.0,
+            "actual_min": 110,
+            "actual_q25": 111.75,
+            "actual_median": 114.5,
+            "actual_q75": 116.25,
+            "actual_max": 119
+          },
+          {
+            "lower": 120,
+            "n": 9,
+            "median_prediction": 122,
+            "actual_min": 120,
+            "actual_q25": 120.0,
+            "actual_median": 121,
+            "actual_q75": 126.0,
+            "actual_max": 150
+          },
+          {
+            "lower": 130,
+            "n": 15,
+            "median_prediction": 138,
+            "actual_min": 132,
+            "actual_q25": 136.0,
+            "actual_median": 137,
+            "actual_q75": 138.0,
+            "actual_max": 138
+          },
+          {
+            "lower": 140,
+            "n": 33,
+            "median_prediction": 142,
+            "actual_min": 139,
+            "actual_q25": 140.0,
+            "actual_median": 141,
+            "actual_q75": 143.0,
+            "actual_max": 149
+          },
+          {
+            "lower": 150,
+            "n": 6,
+            "median_prediction": 152.0,
+            "actual_min": 149,
+            "actual_q25": 150.25,
+            "actual_median": 151.5,
+            "actual_q75": 152.75,
+            "actual_max": 154
+          },
+          {
+            "lower": 160,
+            "n": 2,
+            "median_prediction": 163.5,
+            "actual_min": 159,
+            "actual_q25": 160.75,
+            "actual_median": 162.5,
+            "actual_q75": 164.25,
+            "actual_max": 166
+          },
+          {
+            "lower": 180,
+            "n": 1,
+            "median_prediction": 187,
+            "actual_min": 186,
+            "actual_q25": 186.0,
+            "actual_median": 186,
+            "actual_q75": 186.0,
+            "actual_max": 186
+          }
+        ]
+      }
+    }
+  },
+  "5": {
+    "train_seed": 2026111910,
+    "holdout_seed": 2026111911,
+    "train_draws": 128,
+    "holdout_draws": 256,
+    "train_mixing": 128,
+    "holdout_mixing": 256,
+    "model": {
+      "log2_amplitude": 1.5642823831752608,
+      "baseline": {
+        "32": 19,
+        "64": 36,
+        "128": 69
+      },
+      "parity_medians": {
+        "8": {
+          "32": 19,
+          "64": 36,
+          "128": 70
+        },
+        "12": {
+          "32": 19,
+          "64": 36,
+          "128": 69
+        },
+        "16": {
+          "32": 19,
+          "64": 36,
+          "128": 70
+        },
+        "20": {
+          "32": 24,
+          "64": 44,
+          "128": 86
+        }
+      }
+    },
+    "holdout": {
+      "32": {
+        "actual_min_median_max": [
+          17,
+          19.0,
+          28
+        ],
+        "metrics": {
+          "constant": {
+            "covered": 256,
+            "mae": 0.90625,
+            "spearman": null,
+            "within_two_rounds": 240,
+            "max_abs_error": 9,
+            "underestimates": 85
+          },
+          "parity": {
+            "covered": 256,
+            "mae": 0.84765625,
+            "spearman": 0.1942635108764463,
+            "within_two_rounds": 242,
+            "max_abs_error": 4,
+            "underestimates": 84
+          },
+          "arnoldi": {
+            "covered": 256,
+            "mae": 0.453125,
+            "spearman": 0.8424315991365178,
+            "within_two_rounds": 255,
+            "max_abs_error": 3,
+            "underestimates": 52
+          },
+          "certified": {
+            "covered": 256,
+            "mae": 5.828125,
+            "spearman": 0.15892865264058817,
+            "within_two_rounds": 3,
+            "max_abs_error": 12,
+            "underestimates": 0
+          },
+          "certified_with_remainder": {
+            "covered": 256,
+            "mae": 1.18359375,
+            "spearman": 0.9104845321354379,
+            "within_two_rounds": 256,
+            "max_abs_error": 2,
+            "underestimates": 0
+          }
+        },
+        "prediction_bins": [
+          {
+            "lower": 10,
+            "n": 165,
+            "median_prediction": 18,
+            "actual_min": 17,
+            "actual_q25": 18.0,
+            "actual_median": 19,
+            "actual_q75": 19.0,
+            "actual_max": 22
+          },
+          {
+            "lower": 20,
+            "n": 91,
+            "median_prediction": 20,
+            "actual_min": 19,
+            "actual_q25": 20.0,
+            "actual_median": 20,
+            "actual_q75": 21.0,
+            "actual_max": 28
+          }
+        ]
+      },
+      "64": {
+        "actual_min_median_max": [
+          32,
+          36.0,
+          55
+        ],
+        "metrics": {
+          "constant": {
+            "covered": 256,
+            "mae": 1.98828125,
+            "spearman": null,
+            "within_two_rounds": 187,
+            "max_abs_error": 19,
+            "underestimates": 104
+          },
+          "parity": {
+            "covered": 256,
+            "mae": 1.89453125,
+            "spearman": 0.18819012038942978,
+            "within_two_rounds": 187,
+            "max_abs_error": 11,
+            "underestimates": 104
+          },
+          "arnoldi": {
+            "covered": 256,
+            "mae": 0.65625,
+            "spearman": 0.9094246942827027,
+            "within_two_rounds": 249,
+            "max_abs_error": 5,
+            "underestimates": 75
+          },
+          "certified": {
+            "covered": 256,
+            "mae": 8.02734375,
+            "spearman": 0.8188082207659124,
+            "within_two_rounds": 37,
+            "max_abs_error": 14,
+            "underestimates": 0
+          },
+          "certified_with_remainder": {
+            "covered": 256,
+            "mae": 2.90625,
+            "spearman": 0.9479841221559292,
+            "within_two_rounds": 88,
+            "max_abs_error": 5,
+            "underestimates": 0
+          }
+        },
+        "prediction_bins": [
+          {
+            "lower": 30,
+            "n": 222,
+            "median_prediction": 35.0,
+            "actual_min": 32,
+            "actual_q25": 34.0,
+            "actual_median": 35.0,
+            "actual_q75": 37.0,
+            "actual_max": 41
+          },
+          {
+            "lower": 40,
+            "n": 32,
+            "median_prediction": 41.0,
+            "actual_min": 38,
+            "actual_q25": 40.0,
+            "actual_median": 40.0,
+            "actual_q75": 42.0,
+            "actual_max": 48
+          },
+          {
+            "lower": 50,
+            "n": 2,
+            "median_prediction": 53.0,
+            "actual_min": 49,
+            "actual_q25": 50.5,
+            "actual_median": 52.0,
+            "actual_q75": 53.5,
+            "actual_max": 55
+          }
+        ]
+      },
+      "128": {
+        "actual_min_median_max": [
+          61,
+          70.0,
+          108
+        ],
+        "metrics": {
+          "constant": {
+            "covered": 256,
+            "mae": 4.12890625,
+            "spearman": null,
+            "within_two_rounds": 107,
+            "max_abs_error": 39,
+            "underestimates": 132
+          },
+          "parity": {
+            "covered": 256,
+            "mae": 3.87109375,
+            "spearman": 0.16037421444837813,
+            "within_two_rounds": 108,
+            "max_abs_error": 22,
+            "underestimates": 124
+          },
+          "arnoldi": {
+            "covered": 256,
+            "mae": 1.37890625,
+            "spearman": 0.9068829015000162,
+            "within_two_rounds": 216,
+            "max_abs_error": 11,
+            "underestimates": 107
+          },
+          "certified": {
+            "covered": 256,
+            "mae": 10.91796875,
+            "spearman": 0.8123309972452364,
+            "within_two_rounds": 0,
+            "max_abs_error": 21,
+            "underestimates": 0
+          },
+          "certified_with_remainder": {
+            "covered": 256,
+            "mae": 6.09375,
+            "spearman": 0.9488187018101633,
+            "within_two_rounds": 0,
+            "max_abs_error": 11,
+            "underestimates": 0
+          }
+        },
+        "prediction_bins": [
+          {
+            "lower": 60,
+            "n": 141,
+            "median_prediction": 66,
+            "actual_min": 61,
+            "actual_q25": 66.0,
+            "actual_median": 67,
+            "actual_q75": 69.0,
+            "actual_max": 77
+          },
+          {
+            "lower": 70,
+            "n": 98,
+            "median_prediction": 73.0,
+            "actual_min": 68,
+            "actual_q25": 71.0,
+            "actual_median": 73.0,
+            "actual_q75": 75.75,
+            "actual_max": 85
+          },
+          {
+            "lower": 80,
+            "n": 15,
+            "median_prediction": 81,
+            "actual_min": 78,
+            "actual_q25": 80.0,
+            "actual_median": 81,
+            "actual_q75": 83.0,
+            "actual_max": 94
+          },
+          {
+            "lower": 90,
+            "n": 1,
+            "median_prediction": 97,
+            "actual_min": 96,
+            "actual_q25": 96.0,
+            "actual_median": 96,
+            "actual_q75": 96.0,
+            "actual_max": 96
+          },
+          {
+            "lower": 100,
+            "n": 1,
+            "median_prediction": 109,
+            "actual_min": 108,
+            "actual_q25": 108.0,
+            "actual_median": 108,
+            "actual_q75": 108.0,
+            "actual_max": 108
+          }
+        ]
+      }
+    }
+  }
+}

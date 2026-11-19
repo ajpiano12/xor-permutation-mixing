@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#122f35"><title>research/round_bounds.py · Difference Atlas</title>
+<link rel="icon" href="../mark.svg"><link rel="stylesheet" href="../reader.css"></head>
+<body><a class="skip" href="#document">Skip to document</a><header><div class="bar">
+<a class="brand" href="../index.html#map"><img src="../mark.svg" width="33" height="33" alt="">Difference Atlas</a>
+<nav aria-label="Atlas"><a href="../index.html#map">Research map</a><a href="../index.html#library">Proof library</a></nav>
+</div></header><div class="layout"><aside><div class="meta">Source code</div>
+<p class="filename">round_bounds.py</p><a download="round_bounds.py" href="raw/round_bounds.py">Download source</a></aside>
+<main id="document" tabindex="-1"><h1>research/round_bounds.py</h1><pre><code>&quot;&quot;&quot;Certify slow pairwise mixing near affine maps and bound the one-transposition family.&quot;&quot;&quot;
+import argparse
+from collections import Counter
+from fractions import Fraction
+import json
+
+from classify_mixing import add_table_arguments, read_table_arguments, validated_table
+
+
+def rounded_power(base, exponent, precision, *, upper):
+    &quot;&quot;&quot;Enclose a nonnegative rational power on a binary grid by repeated squaring.&quot;&quot;&quot;
+    scale = 1 &lt;&lt; precision
+    rounding = scale - 1 if upper else 0
+    value = (base.numerator * scale + (base.denominator - 1 if upper else 0)) // base.denominator
+    result = scale
+    while exponent:
+        if exponent &amp; 1:
+            result = (result * value + rounding) // scale
+        exponent &gt;&gt;= 1
+        value = (value * value + rounding) // scale
+    return Fraction(result, scale)
+
+
+def crossing_bound(base, threshold, precision, *, upper):
+    &quot;&quot;&quot;Return a sufficient or necessary integer exponent for base**k &lt;= threshold.&quot;&quot;&quot;
+    if threshold &gt;= 1:
+        return 0
+    lo, hi = 0, 1
+    while rounded_power(base, hi, precision, upper=upper) &gt; threshold:
+        lo, hi = hi, 2 * hi
+    while hi - lo &gt; 1:
+        mid = (lo + hi) // 2
+        if rounded_power(base, mid, precision, upper=upper) &gt; threshold:
+            lo = mid
+        else:
+            hi = mid
+    # For a lower bound, the last lower enclosure above threshold certifies hi−1 fails.
+    return hi
+
+
+def close_affine(permutation):
+    &quot;&quot;&quot;Recover the unique affine map if its table differs on fewer than N/4 inputs.&quot;&quot;&quot;
+    p = validated_table(permutation)
+    size = len(p)
+    if size &lt; 4:
+        raise ValueError(&quot;at least two input bits are required&quot;)
+    columns = []
+    for i in range(size.bit_length() - 1):
+        step = 1 &lt;&lt; i
+        # Each unordered pair has the same derivative in both orientations.
+        counts = Counter(p[x] ^ p[x | step] for x in range(size) if not x &amp; step)
+        column, count = counts.most_common(1)[0]
+        if 4 * count &lt;= size:
+            return None
+        columns.append(column)
+    values = [0] * size
+    for x in range(1, size):
+        bit = x &amp; -x
+        values[x] = values[x ^ bit] ^ columns[bit.bit_length() - 1]
+    offset, count = Counter(image ^ linear for image, linear in zip(p, values)).most_common(1)[0]
+    h = size - count
+    return (columns, offset, h) if 4 * h &lt; size else None
+
+
+def table_bounds(permutation, error_bits):
+    if error_bits &lt; 1:
+        raise ValueError(&quot;error bits must be positive&quot;)
+    fit = close_affine(permutation)
+    if fit is None:
+        return {&quot;status&quot;: &quot;no affine approximation within the strict N/4 radius&quot;}
+    columns, offset, h = fit
+    size = 1 &lt;&lt; len(columns)
+    answer = {&quot;columns&quot;: columns, &quot;offset&quot;: offset, &quot;mismatches&quot;: h, &quot;bits&quot;: len(columns)}
+    if h == 0:
+        return {**answer, &quot;status&quot;: &quot;affine; pair distances never converge&quot;}
+    base = Fraction(size - 4*h, size)
+    precision = len(columns) + 2 * error_bits + 32
+    k = crossing_bound(base, Fraction(2, 1 &lt;&lt; error_bits), precision, upper=False)
+    return {**answer, &quot;status&quot;: &quot;necessary rounds certified&quot;, &quot;epsilon_bits&quot;: error_bits,
+            &quot;necessary_cipher_rounds&quot;: 1 + k}
+
+
+def family_bounds(bits, error_bits, order=2):
+    &quot;&quot;&quot;Applicable to a linear cycle on nonzero points with two table entries swapped.&quot;&quot;&quot;
+    if bits &lt; 4 or error_bits &lt; 1 or not 2 &lt;= order &lt;= 1 &lt;&lt; bits:
+        raise ValueError(&quot;family requires at least four bits, positive error bits and a valid tuple order&quot;)
+    size = 1 &lt;&lt; bits
+    m = size - 1
+    p = Fraction(4, size)
+    precision = bits + 2 * error_bits + 32
+    target = Fraction(1, 1 &lt;&lt; error_bits)
+    base = 1 - 2*p
+    necessary = crossing_bound(base, 4 * target**2, precision, upper=False)
+    answer = {&quot;bits&quot;: bits, &quot;order&quot;: order, &quot;epsilon_bits&quot;: error_bits,
+              &quot;necessary_cipher_rounds&quot;: 1 + necessary}
+    if order &gt; 2:
+        # Compare one uniformly sampled matching edge to independent label moves.
+        q = Fraction(2, size)
+        one_epoch_error = order * (order - 1) * q * (1 + 3*m*q)
+        one_label = rounded_power(1 - 2*q, size // 2, precision, upper=True)
+        pairs = order * (order - 1) // 2
+        best_epochs = None
+        if order*q &lt;= 1:
+            for batch in range(1, bits + 1):
+                comparison = 2*batch*one_epoch_error
+                if comparison &gt;= 1:
+                    break
+                factor = pairs * rounded_power(one_label, 2*batch, precision, upper=True) + comparison
+                if factor &lt; 1:
+                    epochs = batch * crossing_bound(factor, target, precision, upper=True)
+                    if best_epochs is None or epochs &lt; best_epochs:
+                        best_epochs = epochs
+        return {**answer, &quot;sufficient_epochs&quot;: best_epochs,
+                &quot;sufficient_cipher_rounds&quot;: None if best_epochs is None else 1 + m*best_epochs}
+    alpha = rounded_power(base, size // 2, precision, upper=True)
+    single = m*p*rounded_power(1 - p, m - 1, precision, upper=False)
+    contraction = min(1 - single, alpha + 2*p*(1 + m*p))
+    epochs = crossing_bound(contraction, target * m / (m - 1), precision, upper=True)
+    return {**answer, &quot;sufficient_cipher_rounds&quot;: 1 + m*epochs, &quot;sufficient_epochs&quot;: epochs,
+            &quot;epoch_contraction_upper&quot;: str(contraction)}
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    sub = parser.add_subparsers(dest=&quot;command&quot;, required=True)
+    table = sub.add_parser(&quot;table&quot;, help=&quot;search a supplied table for a certified slow affine approximation&quot;)
+    add_table_arguments(table)
+    family = sub.add_parser(&quot;family&quot;, help=&quot;bounds for a linear full cycle with two entries swapped&quot;)
+    family.add_argument(&quot;--bits&quot;, type=int, required=True)
+    family.add_argument(&quot;--order&quot;, type=int, default=2, help=&quot;number of distinct inputs to track&quot;)
+    for cmd in (table, family):
+        cmd.add_argument(&quot;--error-bits&quot;, type=int, default=128, help=&quot;target total variation is 2^(-error-bits)&quot;)
+    args = parser.parse_args()
+    try:
+        if args.command == &quot;table&quot;:
+            result = table_bounds(read_table_arguments(parser, args), args.error_bits)
+        else:
+            result = family_bounds(args.bits, args.error_bits, args.order)
+    except ValueError as exc:
+        parser.error(str(exc))
+    print(json.dumps(result, indent=2))
+
+
+if __name__ == &quot;__main__&quot;:
+    main()
+</code></pre></main></div></body></html>

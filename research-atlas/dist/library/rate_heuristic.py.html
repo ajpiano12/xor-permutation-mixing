@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#122f35"><title>research/rate_heuristic.py · Difference Atlas</title>
+<link rel="icon" href="../mark.svg"><link rel="stylesheet" href="../reader.css"></head>
+<body><a class="skip" href="#document">Skip to document</a><header><div class="bar">
+<a class="brand" href="../index.html#map"><img src="../mark.svg" width="33" height="33" alt="">Difference Atlas</a>
+<nav aria-label="Atlas"><a href="../index.html#map">Research map</a><a href="../index.html#library">Proof library</a></nav>
+</div></header><div class="layout"><aside><div class="meta">Source code</div>
+<p class="filename">rate_heuristic.py</p><a download="rate_heuristic.py" href="raw/rate_heuristic.py">Download source</a></aside>
+<main id="document" tabindex="-1"><h1>research/rate_heuristic.py</h1><pre><code>&quot;&quot;&quot;Estimate, certify, or measure worst-start pairwise mixing times for a supplied table.&quot;&quot;&quot;
+import argparse
+from collections import defaultdict
+from fractions import Fraction
+import json
+from math import ceil, log2
+from pathlib import Path
+from random import Random
+from statistics import median
+
+import numpy as np
+
+from classify_mixing import add_table_arguments, read_table_arguments, validated_table
+from fast_mixing import walsh
+from mixing import chain_period, transition_counts
+
+ERROR_BITS = (32, 64, 128)
+PROBE_STEPS = 12
+SUMMARY = Path(__file__).resolve().parents[1] / &quot;results&quot; / &quot;rate_heuristic.json&quot;
+
+
+def parity_score(p):
+    histogram = [0] * len(p)
+    for x, image in enumerate(p):
+        histogram[x ^ image] += 1
+    return max(abs(value) for value in walsh(histogram)[1:])
+
+
+def parity_lower_rounds(size, score, exponent):
+    &quot;&quot;&quot;Necessary round count from a single diagonal entry in the Walsh representation.&quot;&quot;&quot;
+    states = size - 1
+    probability = Fraction(score, size) ** 2
+    threshold = Fraction(1, states) + Fraction(2 * states, size &lt;&lt; exponent)
+    if probability == 1:
+        return None
+    if threshold &gt;= 1:
+        return 1
+    low, high = 0, 1
+    while probability ** high &gt; threshold:
+        low, high = high, 2 * high
+    while high - low &gt; 1:
+        mid = (high + low) // 2
+        if probability ** mid &gt; threshold:
+            low = mid
+        else:
+            high = mid
+    return high + 1
+
+
+def arnoldi_factor(counts):
+    &quot;&quot;&quot;Largest Ritz modulus on mean-zero vectors, using at most 12 matrix-vector products.&quot;&quot;&quot;
+    states = len(counts)
+    kernel = np.asarray(counts, dtype=float) / (states + 1)
+    dimension = min(PROBE_STEPS, states - 1)
+    basis = np.zeros((states, dimension + 1))
+    projected = np.zeros((dimension + 1, dimension))
+    rng = np.random.default_rng(109)
+    initial = rng.standard_normal(states)
+    initial -= initial.mean()
+    basis[:, 0] = initial / np.linalg.norm(initial)
+    for j in range(dimension):
+        columns = basis[:, :j + 1]
+        work = kernel @ columns[:, j]
+        work -= work.mean()
+        # A second pass keeps nearly dependent directions orthogonal on small tables.
+        for _ in range(2):
+            coefficients = columns.T @ work
+            projected[:j + 1, j] += coefficients
+            work -= columns @ coefficients
+        residual = np.linalg.norm(work)
+        if residual &lt; 1e-13:
+            dimension = j + 1
+            break
+        projected[j + 1, j] = residual
+        basis[:, j + 1] = work / residual
+    return float(np.abs(np.linalg.eigvals(projected[:dimension, :dimension])).max())
+
+
+def norm_numerator(centered):
+    return int(np.abs(centered).sum(axis=1).max())
+
+
+def exact_rounds(counts, error_bits):
+    &quot;&quot;&quot;Exact integer threshold crossings on an already classified mixing table.&quot;&quot;&quot;
+    states = len(counts)
+    keys = (states + 1) // 2
+    paths = np.asarray(counts, dtype=object) // 2
+    stride = 8
+    powers = [np.eye(states, dtype=int).astype(object)]
+    for _ in range(stride):
+        powers.append(powers[-1] @ paths)
+    centered = states * powers[0] - 1
+    steps, denominator, result = 0, 2 * states, {}
+    deviation = norm_numerator(centered)
+    for target in sorted(set(error_bits)):
+        while (deviation &lt;&lt; target) &gt; denominator:
+            previous = centered
+            centered = centered @ powers[stride]
+            steps += stride
+            denominator *= keys ** stride
+            deviation = norm_numerator(centered)
+        if not steps:
+            result[target] = 1
+            continue
+        # The previous block may contain several crossings. Start at its first step.
+        low, high = 0, stride
+        start_denominator = denominator // keys ** stride
+        while high - low &gt; 1:
+            offset = (low + high) // 2
+            at_offset = norm_numerator(previous @ powers[offset])
+            if (at_offset &lt;&lt; target) &lt;= start_denominator * keys ** offset:
+                high = offset
+            else:
+                low = offset
+        result[target] = 1 + steps - stride + high
+    return result
+
+
+def block_certificate(counts, error_bits):
+    &quot;&quot;&quot;Return whole-block and remainder bounds from the exact 12-step row separation.&quot;&quot;&quot;
+    states = len(counts)
+    keys = (states + 1) // 2
+    counts_half = np.asarray(counts, dtype=object) // 2
+    block = np.eye(states, dtype=int).astype(object)
+    distances = [Fraction(states - 1, states)]
+    for step in range(1, PROBE_STEPS + 1):
+        block = block @ counts_half
+        mass = keys ** step
+        distances.append(Fraction(norm_numerator(states * block - mass), 2 * states * mass))
+    denominator = keys ** PROBE_STEPS
+    distance = distances[-1]
+    separation = max(norm_numerator(block[i + 1:] - row) for i, row in enumerate(block[:-1]))
+    coefficient = Fraction(separation, 2 * denominator)
+    whole, partial = {}, {}
+    for exponent in error_bits:
+        target = Fraction(1, 1 &lt;&lt; exponent)
+        if distance &lt;= target:
+            blocks = 0
+        elif coefficient == 1:
+            partial[exponent] = whole[exponent] = None
+            continue
+        else:
+            low, high = 0, 1
+            while distance * coefficient ** high &gt; target:
+                low, high = high, 2 * high
+            while high - low &gt; 1:
+                mid = (low + high) // 2
+                if distance * coefficient ** mid &lt;= target:
+                    high = mid
+                else:
+                    low = mid
+            blocks = high
+        contraction = coefficient ** blocks
+        tail = next(i for i, value in enumerate(distances) if contraction * value &lt;= target)
+        whole[exponent] = 1 + (blocks + 1) * PROBE_STEPS
+        partial[exponent] = 1 + blocks * PROBE_STEPS + tail
+    return whole, partial
+
+
+def observe(p, exponents):
+    counts = transition_counts(p)
+    if chain_period(counts) != 1:
+        return None
+    whole, partial = block_certificate(counts, exponents)
+    return {&quot;factor&quot;: arnoldi_factor(counts), &quot;parity&quot;: parity_score(p),
+            &quot;rounds&quot;: exact_rounds(counts, exponents), &quot;upper&quot;: whole, &quot;partial_upper&quot;: partial}
+
+
+def sample(size, draws, seed):
+    rng = Random(seed)
+    observations = []
+    for _ in range(draws):
+        table = list(range(size))
+        rng.shuffle(table)
+        row = observe(table, ERROR_BITS)
+        if row is not None:
+            observations.append(row)
+    return observations
+
+
+def fit(rows):
+    if not rows:
+        raise ValueError(&quot;calibration requires at least one mixing table&quot;)
+    offsets = []
+    parity_groups = defaultdict(list)
+    for row in rows:
+        scale = -log2(row[&quot;factor&quot;])
+        for e, rounds in row[&quot;rounds&quot;].items():
+            offsets.append((rounds - 1.5) * scale - e)
+        parity_groups[row[&quot;parity&quot;]].append(row[&quot;rounds&quot;])
+    return {&quot;log2_amplitude&quot;: float(median(offsets)), &quot;baseline&quot;: {
+                str(e): round(median(row[&quot;rounds&quot;][e] for row in rows)) for e in ERROR_BITS},
+            &quot;parity_medians&quot;: {str(score): {str(e): round(median(row[e] for row in grouped))
+                                            for e in ERROR_BITS}
+                               for score, grouped in sorted(parity_groups.items())}}
+
+
+def predict(factor, exponent, log_amplitude=0):
+    if not 0 &lt; factor &lt; 1:
+        return None
+    return max(1, 1 + ceil((exponent + log_amplitude) / -log2(factor)))
+
+
+def ranks(values):
+    ordered = sorted(range(len(values)), key=values.__getitem__)
+    result = np.empty(len(values))
+    start = 0
+    while start &lt; len(ordered):
+        stop = start + 1
+        while stop &lt; len(ordered) and values[ordered[stop]] == values[ordered[start]]:
+            stop += 1
+        result[ordered[start:stop]] = (start + stop - 1) / 2
+        start = stop
+    return result
+
+
+def evaluate(rows, model):
+    results = {}
+    for e in ERROR_BITS:
+        truth = [r[&quot;rounds&quot;][e] for r in rows]
+        parity_predictions = []
+        for r in rows:
+            category = min(model[&quot;parity_medians&quot;], key=lambda key: abs(int(key) - r[&quot;parity&quot;]))
+            parity_predictions.append(model[&quot;parity_medians&quot;][category][str(e)])
+        predictions = {&quot;constant&quot;: [model[&quot;baseline&quot;][str(e)]] * len(rows), &quot;parity&quot;: parity_predictions,
+                       &quot;arnoldi&quot;: [predict(r[&quot;factor&quot;], e, model[&quot;log2_amplitude&quot;]) for r in rows],
+                       &quot;certified&quot;: [r[&quot;upper&quot;][e] for r in rows],
+                       &quot;certified_with_remainder&quot;: [r[&quot;partial_upper&quot;][e] for r in rows]}
+        metrics = {}
+        for name, estimates in predictions.items():
+            pairs = [(a, b) for a, b in zip(truth, estimates) if b is not None]
+            errors = [abs(a - b) for a, b in pairs]
+            if not pairs:
+                metrics[name] = {&quot;covered&quot;: 0}
+                continue
+            x, y = zip(*pairs)
+            rank = None if len(set(y)) &lt; 2 or len(set(x)) &lt; 2 else float(np.corrcoef(ranks(x), ranks(y))[0, 1])
+            metrics[name] = {&quot;covered&quot;: len(errors), &quot;mae&quot;: float(np.mean(errors)), &quot;spearman&quot;: rank,
+                             &quot;within_two_rounds&quot;: sum(d &lt;= 2 for d in errors), &quot;max_abs_error&quot;: max(errors),
+                             &quot;underestimates&quot;: sum(a &gt; b for a, b in pairs)}
+        # Per-bin min and max show the spread that a median alone would hide.
+        bins = defaultdict(list)
+        for actual, estimated in zip(truth, predictions[&quot;arnoldi&quot;]):
+            if estimated is not None:
+                bins[estimated // 10 * 10].append((estimated, actual))
+        by_prediction = []
+        for lower, values in sorted(bins.items()):
+            estimated, actual = zip(*values)
+            by_prediction.append({&quot;lower&quot;: lower, &quot;n&quot;: len(actual), &quot;median_prediction&quot;: median(estimated),
+                                  &quot;actual_min&quot;: min(actual), &quot;actual_q25&quot;: float(np.quantile(actual, 0.25)),
+                                  &quot;actual_median&quot;: median(actual), &quot;actual_q75&quot;: float(np.quantile(actual, 0.75)),
+                                  &quot;actual_max&quot;: max(actual)})
+        results[str(e)] = {&quot;actual_min_median_max&quot;: [min(truth), median(truth), max(truth)],
+                           &quot;metrics&quot;: metrics, &quot;prediction_bins&quot;: by_prediction}
+    return results
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    subs = parser.add_subparsers(dest=&quot;command&quot;, required=True)
+    bench = subs.add_parser(&quot;benchmark&quot;, help=&quot;fit on one sample and score an independent sample&quot;)
+    bench.add_argument(&quot;--train&quot;, type=int, default=128)
+    bench.add_argument(&quot;--holdout&quot;, type=int, default=256)
+    bench.add_argument(&quot;--output&quot;, type=Path, default=SUMMARY)
+    analyze = subs.add_parser(&quot;table&quot;, help=&quot;estimate rounds for a table&quot;)
+    add_table_arguments(analyze)
+    analyze.add_argument(&quot;--error-bits&quot;, type=int, nargs=&quot;+&quot;, default=ERROR_BITS)
+    analyze.add_argument(&quot;--model&quot;, type=Path, default=SUMMARY)
+    analyze.add_argument(&quot;--exact&quot;, action=&quot;store_true&quot;, help=&quot;also find every exact threshold crossing&quot;)
+    analyze.add_argument(&quot;--certificate&quot;, action=&quot;store_true&quot;, help=&quot;also certify sufficient round counts&quot;)
+    parity = subs.add_parser(&quot;parity&quot;, help=&quot;use one fast Walsh transform, without building the difference matrix&quot;)
+    add_table_arguments(parity)
+    parity.add_argument(&quot;--error-bits&quot;, type=int, nargs=&quot;+&quot;, default=ERROR_BITS)
+    parity.add_argument(&quot;--model&quot;, type=Path, default=SUMMARY)
+    args = parser.parse_args()
+    if args.command == &quot;benchmark&quot;:
+        if min(args.train, args.holdout) &lt; 1:
+            parser.error(&quot;draw counts must be positive&quot;)
+        results = {}
+        for bits in [4, 5]:
+            train_seed, holdout_seed = 2026111900 + 2 * bits, 2026111901 + 2 * bits
+            train, holdout = sample(1 &lt;&lt; bits, args.train, train_seed), sample(1 &lt;&lt; bits, args.holdout, holdout_seed)
+            if not holdout:
+                parser.error(&quot;holdout contains no mixing tables&quot;)
+            model = fit(train)
+            results[str(bits)] = {&quot;train_seed&quot;: train_seed, &quot;holdout_seed&quot;: holdout_seed,
+                                  &quot;train_draws&quot;: args.train, &quot;holdout_draws&quot;: args.holdout,
+                                  &quot;train_mixing&quot;: len(train), &quot;holdout_mixing&quot;: len(holdout),
+                                  &quot;model&quot;: model, &quot;holdout&quot;: evaluate(holdout, model)}
+        args.output.write_text(json.dumps(results, indent=2, allow_nan=False) + &quot;\n&quot;)
+        return
+    if min(args.error_bits) &lt; 1:
+        parser.error(&quot;error bits must be positive&quot;)
+    try:
+        p = validated_table(read_table_arguments(parser, args))
+        if len(p) &lt; 4:
+            raise ValueError(&quot;supply a permutation on at least two bits&quot;)
+        if args.command == &quot;parity&quot;:
+            score = parity_score(p)
+            result = {&quot;parity_agreement_up_to_complement&quot;: (len(p) + score) // 2, &quot;table_size&quot;: len(p),
+                      &quot;nonmixing_certified&quot;: score == len(p)}
+            if score &lt; len(p):
+                result[&quot;necessary_cipher_rounds&quot;] = {e: parity_lower_rounds(len(p), score, e)
+                                                    for e in args.error_bits}
+                model = json.loads(args.model.read_text()).get(str(len(p).bit_length() - 1), {}).get(&quot;model&quot;)
+                if model:
+                    category = min(model[&quot;parity_medians&quot;], key=lambda key: abs(int(key) - score))
+                    result[&quot;estimated_rounds_if_mixing&quot;] = {
+                        e: model[&quot;parity_medians&quot;][category][str(e)] for e in args.error_bits if e in ERROR_BITS}
+            print(json.dumps(result, indent=2))
+            return
+        counts = transition_counts(p)
+    except ValueError as error:
+        parser.error(str(error))
+    period = chain_period(counts)
+    result = {&quot;status&quot;: &quot;mixing&quot; if period == 1 else (&quot;disconnected&quot; if period is None else &quot;periodic&quot;)}
+    if period == 1:
+        model = json.loads(args.model.read_text()).get(str(len(p).bit_length() - 1), {}).get(&quot;model&quot;, {})
+        factor = arnoldi_factor(counts)
+        amplitude = model.get(&quot;log2_amplitude&quot;, 0)
+        result.update({&quot;arnoldi_factor&quot;: factor, &quot;calibrated&quot;: bool(model), &quot;estimated_cipher_rounds&quot;:
+                       {e: predict(factor, e, amplitude) for e in args.error_bits}})
+        if args.exact:
+            result[&quot;exact_cipher_rounds&quot;] = exact_rounds(counts, args.error_bits)
+        if args.certificate:
+            _, result[&quot;sufficient_cipher_rounds&quot;] = block_certificate(counts, args.error_bits)
+    print(json.dumps(result, indent=2))
+
+
+if __name__ == &quot;__main__&quot;:
+    main()
+</code></pre></main></div></body></html>

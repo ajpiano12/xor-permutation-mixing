@@ -29,16 +29,19 @@ DOCUMENTS = (
     "research/TRIPLE_MOMENT.md", "research/TRIPLE_LOWER.md", "research/INVERSE_TRIPLE_RATE.md",
     "research/BRIEF_AND_PROGRESS.md", "research/POWER_CERTIFICATE.md", "research/STRUCTURED_SMALL_ERROR.md",
     "research/SPECTRAL_CERTIFICATE.md", "research/POLYNOMIAL_UPDATE.md", "research/SMALL_ERROR_DATA.md",
+    "research/WARMUP_BOUNDS.md", "research/ROUND_BOUNDS.md", "research/RATE_HEURISTIC.md",
 )
 PROGRAMS = ("mixing.py", "exact_four_bit.py", "four_bit_obstructions.py", "sample_four_bit.py",
             "verify_rate_bins.py", "classify_mixing.py", "fast_mixing.py", "parallel_mixing.c", "parity_screen.py",
             "group_mixing.py", "higher_census.py", "quadratic_mixing.py", "inverse_triples.py",
             "research/group_counts.py", "research/triple_moment.py", "research/triple_lower.py", "research/triple_probe.py", "research/rate_probe.py",
             "power_mixing.py", "research/spectral_certificate.py", "research/structured_probe.py",
-            "research/small_error_census.py")
+            "research/small_error_census.py", "research/rate_heuristic.py", "research/round_bounds.py",
+            "research/sweep_bounds.py")
 DATA = ("results/summary.csv", "results/permutations.csv", "results/four_bit/summary.json",
         "results/four_bit/samples.csv", "results/four_bit/convergence.png",
-        "results/higher_three_bit.csv", "results/triple_probe.csv", "results/small_error_times.csv")
+        "results/higher_three_bit.csv", "results/triple_probe.csv", "results/small_error_times.csv",
+        "results/progress-brief.pdf", "results/rate_heuristic.json")
 COMPRESS = {"results/permutations.csv", "results/four_bit/samples.csv"}
 
 

@@ -1,6 +1,8 @@
 # One fixed permutation for three, four and more inputs at small error
 
-On 128 bits, one explicit permutation sends **every ordered quadruple** within $2^{-128}$ of uniform after **81 cipher rounds**. The same permutation gives **65 rounds for triples**. Its worst-start quadruple mixing time at this threshold is at least **10 rounds**. Changing the update width gives **61 rounds for triples** or **191 rounds for eight inputs**. Each construction uses one fixed public permutation and independent uniform XOR keys, as in Problem 4.
+The sharper sweep analysis now certifies **36 rounds for quadruples** and **34 for triples** on the same 128-bit permutation with a 16-bit update. Combined with the support lower bound below, its worst-case four-input mixing time lies between 10 and 36 rounds at TV $2^{-128}$. [Warmup and sweep proof](WARMUP_BOUNDS.md)
+
+The following two-sweep comparison gives an earlier bound. On 128 bits, one explicit permutation sends **every ordered quadruple** within $2^{-128}$ of uniform after **81 cipher rounds**. The same permutation gives **65 rounds for triples**. Its worst-start quadruple mixing time at this threshold is at least **10 rounds**. Changing the update width gives **61 rounds for triples** or **191 rounds for eight inputs**. Each construction uses one fixed public permutation and independent uniform XOR keys, as in Problem 4.
 
 | Bits $n$ | Updated bits $b$ | Tuple order $t$ | Rounds for $2^{-32}$ | Rounds for $2^{-64}$ | Rounds for $2^{-128}$ |
 | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -85,7 +87,7 @@ The ideal sweep bound also holds after projecting to differences. Comparing the 
 
 When $t\le B$, start with $t$ distinct low blocks and a common control. The first layer gives every point the same offset, so the first difference state is deterministic. Each later layer has at most $B^{t-1}$ possible patterns of relative offsets. After $r\ge2$ cipher rounds the support of the difference law before the final mask therefore has size at most $B^{(t-1)(r-2)}$. The uniform target has $(N-1)(N-2)\cdots(N-t+1)$ difference states. Its mass outside that support gives a lower bound on TV.
 
-For $n=128$, $b=16$, $t=4$ and $r=9$, the support contains at most $2^{336}$ of the $(2^{128}-1)(2^{128}-2)(2^{128}-3)$ states. The resulting distance is greater than $2^{-128}$, so at least 10 rounds are necessary in the worst case. The sufficient bound of 81 leaves room to improve the analysis. In its two-sweep estimate, the relative-offset comparison contributes approximately $1.12\times10^{-8}$ and the ideal control-collision term contributes $6.06\times10^{-28}$.
+For $n=128$, $b=16$, $t=4$ and $r=9$, the support contains at most $2^{336}$ of the $(2^{128}-1)(2^{128}-2)(2^{128}-3)$ states. The resulting distance is greater than $2^{-128}$, so at least 10 rounds are necessary in the worst case. The original sufficient bound of 81 has since been reduced to 36. In its two-sweep estimate, the relative-offset comparison contributes approximately $1.12\times10^{-8}$ and the ideal control-collision term contributes $6.06\times10^{-28}$.
 
 ## Scaling and prior work
 

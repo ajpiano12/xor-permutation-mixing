@@ -169,12 +169,18 @@ def main():
                         help="16 field elements, from the constant to the leading coefficient, for polynomial15")
     parser.add_argument("--modulus", type=lambda s: int(s, 0), required=True)
     parser.add_argument("--error-bits", nargs="+", type=int, default=[32, 64, 128])
+    parser.add_argument("--sweep-analysis", action="store_true",
+                        help="also calculate short warmup and disjoint-window sweep bounds")
     add_table_arguments(parser)
     args = parser.parse_args()
     try:
         p = read_table_arguments(parser, args) if args.images or args.file is not None else None
         result = certify(args.bits, args.block_bits, args.order, args.modulus, args.error_bits, p,
                          control=args.control, coefficients=args.coefficients)
+        if args.sweep_analysis:
+            from research.sweep_bounds import sweep_analysis
+            result["improved_sweep_bounds"] = sweep_analysis(
+                args.bits, args.block_bits, args.order, args.error_bits, result["mismatches"], args.control)
     except ValueError as exc:
         parser.error(str(exc))
     print(json.dumps(result, indent=2))
