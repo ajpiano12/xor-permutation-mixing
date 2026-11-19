@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#122f35"><title>research/spectral_certificate.py · Difference Atlas</title>
+<link rel="icon" href="../mark.svg"><link rel="stylesheet" href="../reader.css"></head>
+<body><a class="skip" href="#document">Skip to document</a><header><div class="bar">
+<a class="brand" href="../index.html#map"><img src="../mark.svg" width="33" height="33" alt="">Difference Atlas</a>
+<nav aria-label="Atlas"><a href="../index.html#map">Research map</a><a href="../index.html#library">Proof library</a></nav>
+</div></header><div class="layout"><aside><div class="meta">Source code</div>
+<p class="filename">spectral_certificate.py</p><a download="spectral_certificate.py" href="raw/spectral_certificate.py">Download source</a></aside>
+<main id="document" tabindex="-1"><h1>research/spectral_certificate.py</h1><pre><code>&quot;&quot;&quot;Certify small-error tuple mixing for an inverse-based unbalanced Feistel permutation.&quot;&quot;&quot;
+import argparse
+from fractions import Fraction
+import json
+from math import comb, isqrt
+
+from classify_mixing import add_table_arguments, read_table_arguments, validated_table
+from inverse_triples import field_inverse_table
+
+
+def polynomial_remainder(a, b):
+    while a and a.bit_length() &gt;= b.bit_length():
+        a ^= b &lt;&lt; (a.bit_length() - b.bit_length())
+    return a
+
+
+def irreducible(modulus, degree):
+    &quot;&quot;&quot;Every reducible binary polynomial has an irreducible factor of degree &lt;= degree/2.&quot;&quot;&quot;
+    if degree &lt; 1 or modulus &lt;= 0 or modulus.bit_length() != degree + 1:
+        return False
+    x_power = 2
+    for _ in range(1, degree // 2 + 1):
+        square = sum(1 &lt;&lt; (2 * i) for i in range(x_power.bit_length()) if x_power &amp; (1 &lt;&lt; i))
+        x_power = polynomial_remainder(square, modulus)
+        a, b = modulus, x_power ^ 2
+        while b:
+            a, b = b, polynomial_remainder(a, b)
+        if a != 1:
+            return False
+    return True
+
+
+def round_image(value, inverse, control_bits, block_bits):
+    &quot;&quot;&quot;XOR the projected inverse into the low block, then rotate that block to the top.&quot;&quot;&quot;
+    block_mask = (1 &lt;&lt; block_bits) - 1
+    control = value &gt;&gt; block_bits
+    return ((value ^ inverse[control]) &amp; block_mask) &lt;&lt; control_bits | control
+
+
+def ceil_sqrt(x):
+    return 1 + isqrt(x - 1)
+
+
+def block_bound(bits, block_bits, order, mismatches=0):
+    &quot;&quot;&quot;Rational, outward-rounded upper bound after two sweeps in translated coordinates.&quot;&quot;&quot;
+    if not 1 &lt;= block_bits &lt;= bits // 2:
+        raise ValueError(&quot;block width must be between 1 and half the bit length&quot;)
+    size = 1 &lt;&lt; bits
+    if not 2 &lt;= order &lt;= size or not 0 &lt;= mismatches &lt;= size:
+        raise ValueError(&quot;order must be between 2 and the table size, and h must be a valid count&quot;)
+    blocks = (bits + block_bits - 1) // block_bits
+    alphabet = 1 &lt;&lt; block_bits
+    field_size = size // alphabet
+    queries = min(order, field_size)
+    if block_bits * queries &gt;= 2 * field_size.bit_length():
+        # The outward-rounded character bound already gives the trivial estimate in this regime.
+        return Fraction(1)
+    bias = Fraction(2 * (queries - 1) * ceil_sqrt(field_size) + queries + 1, field_size)
+    layer_error = ceil_sqrt(alphabet**queries - 1) * bias / 2
+    pointwise_factor = alphabet if bits % block_bits == 0 else alphabet**2
+    ideal_error = Fraction(blocks * comb(order, 2) * pointwise_factor * (alphabet - 1), size)
+    perturbation = Fraction(order * mismatches, size)
+    return min(Fraction(1), ideal_error + 2 * blocks * (layer_error + perturbation))
+
+
+def sufficient_rounds(bits, block_bits, delta, error_bits):
+    if error_bits &lt;= 0:
+        raise ValueError(&quot;error bits must be positive&quot;)
+    target = Fraction(1, 1 &lt;&lt; error_bits)
+    length = 2 * ((bits + block_bits - 1) // block_bits)
+    if delta &lt;= target:
+        return 1 + length
+    if 2 * delta &gt;= 1:
+        return None
+    # Binary search gives the first certified block count without floating point.
+    def reaches(blocks):
+        return (2 * delta) ** blocks &lt;= 2 * target
+    low, high = 1, 2
+    while not reaches(high):
+        low, high = high, 2 * high
+    while high - low &gt; 1:
+        middle = (high + low) // 2
+        if reaches(middle):
+            high = middle
+        else:
+            low = middle
+    return 1 + length * high
+
+
+def certify(bits, block_bits, order, modulus, error_bits, permutation=None):
+    if not 1 &lt;= block_bits &lt;= bits // 2:
+        raise ValueError(&quot;block width must be between 1 and half the bit length&quot;)
+    control_bits = bits - block_bits
+    if not irreducible(modulus, control_bits):
+        raise ValueError(f&quot;expected an irreducible binary polynomial of degree {control_bits}&quot;)
+    mismatches = 0
+    if permutation is not None:
+        p = validated_table(permutation)
+        if len(p) != 1 &lt;&lt; bits:
+            raise ValueError(&quot;table length does not match the specified bit length&quot;)
+        inverse = field_inverse_table(1 &lt;&lt; control_bits, modulus)
+        mismatches = sum(y != round_image(i, inverse, control_bits, block_bits) for i, y in enumerate(p))
+    delta = block_bound(bits, block_bits, order, mismatches)
+    return {&quot;input&quot;: &quot;specified compact construction&quot; if permutation is None else &quot;supplied truth table&quot;,
+            &quot;bits&quot;: bits, &quot;block_bits&quot;: block_bits, &quot;order&quot;: order, &quot;field_modulus&quot;: hex(modulus),
+            &quot;mismatches&quot;: mismatches, &quot;two_sweep_tv_bound&quot;: str(delta),
+            &quot;sufficient_cipher_rounds&quot;: {f&quot;2^-{k}&quot;: sufficient_rounds(bits, block_bits, delta, k)
+                                        for k in error_bits}}
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(&quot;--bits&quot;, type=int, required=True)
+    parser.add_argument(&quot;--block-bits&quot;, type=int, required=True)
+    parser.add_argument(&quot;--order&quot;, type=int, required=True)
+    parser.add_argument(&quot;--modulus&quot;, type=lambda s: int(s, 0), required=True)
+    parser.add_argument(&quot;--error-bits&quot;, nargs=&quot;+&quot;, type=int, default=[32, 64, 128])
+    add_table_arguments(parser)
+    args = parser.parse_args()
+    try:
+        p = read_table_arguments(parser, args) if args.images or args.file is not None else None
+        result = certify(args.bits, args.block_bits, args.order, args.modulus, args.error_bits, p)
+    except ValueError as exc:
+        parser.error(str(exc))
+    print(json.dumps(result, indent=2))
+
+
+if __name__ == &quot;__main__&quot;:
+    main()
+</code></pre></main></div></body></html>

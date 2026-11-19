@@ -1,0 +1,59 @@
+bits,t,family,representative,permutations,status,period,rounds_at_2^-n,rounds_at_2^-16,rounds_at_2^-32,rounds_at_2^-64,rounds_at_2^-128
+3,2,three-bit census,0 1 2 3 4 5 6 7,8,disconnected,,,,,,
+3,3,three-bit census,0 1 2 3 4 5 6 7,8,disconnected,,,,,,
+3,2,three-bit census,0 1 2 3 4 5 7 6,224,disconnected,,,,,,
+3,3,three-bit census,0 1 2 3 4 5 7 6,224,disconnected,,,,,,
+3,2,three-bit census,0 1 2 3 4 6 7 5,896,disconnected,,,,,,
+3,3,three-bit census,0 1 2 3 4 6 7 5,896,disconnected,,,,,,
+3,2,three-bit census,0 1 2 3 5 4 7 6,168,disconnected,,,,,,
+3,3,three-bit census,0 1 2 3 5 4 7 6,168,disconnected,,,,,,
+3,2,three-bit census,0 1 2 3 5 6 7 4,672,disconnected,,,,,,
+3,3,three-bit census,0 1 2 3 5 6 7 4,672,disconnected,,,,,,
+3,2,three-bit census,0 1 2 4 3 5 7 6,1344,disconnected,,,,,,
+3,3,three-bit census,0 1 2 4 3 5 7 6,1344,disconnected,,,,,,
+3,2,three-bit census,0 1 2 4 3 6 7 5,3584,mixing,1,3,12,23,44,87
+3,3,three-bit census,0 1 2 4 3 6 7 5,3584,mixing,1,5,17,33,65,129
+3,2,three-bit census,0 1 2 4 5 3 7 6,2688,disconnected,,,,,,
+3,3,three-bit census,0 1 2 4 5 3 7 6,2688,disconnected,,,,,,
+3,2,three-bit census,0 1 2 4 5 6 3 7,2688,mixing,1,3,12,23,44,87
+3,3,three-bit census,0 1 2 4 5 6 3 7,2688,mixing,1,5,17,33,65,129
+3,2,three-bit census,0 1 2 4 5 6 7 3,10752,mixing,1,4,13,24,45,88
+3,3,three-bit census,0 1 2 4 5 6 7 3,10752,mixing,1,5,14,24,46,88
+3,2,three-bit census,0 1 3 2 6 7 5 4,336,disconnected,,,,,,
+3,3,three-bit census,0 1 3 2 6 7 5 4,336,disconnected,,,,,,
+3,2,three-bit census,0 1 3 4 2 6 7 5,5376,mixing,1,5,18,34,66,130
+3,3,three-bit census,0 1 3 4 2 6 7 5,5376,mixing,1,5,19,35,67,131
+3,2,three-bit census,0 1 3 4 6 2 7 5,1792,mixing,1,3,12,23,44,87
+3,3,three-bit census,0 1 3 4 6 2 7 5,1792,mixing,1,5,17,33,65,129
+3,2,three-bit census,0 1 3 4 6 7 5 2,5376,mixing,1,6,19,35,67,131
+3,3,three-bit census,0 1 3 4 6 7 5 2,5376,mixing,1,6,20,36,68,132
+3,2,three-bit census,0 1 4 5 6 7 2 3,448,disconnected,,,,,,
+3,3,three-bit census,0 1 4 5 6 7 2 3,448,disconnected,,,,,,
+3,2,three-bit census,0 1 4 5 6 7 3 2,448,disconnected,,,,,,
+3,3,three-bit census,0 1 4 5 6 7 3 2,448,disconnected,,,,,,
+3,2,three-bit census,0 1 4 6 3 7 5 2,2688,mixing,1,3,12,23,44,87
+3,3,three-bit census,0 1 4 6 3 7 5 2,2688,mixing,1,5,17,33,65,129
+3,2,three-bit census,0 1 4 6 7 3 5 2,448,disconnected,,,,,,
+3,3,three-bit census,0 1 4 6 7 3 5 2,448,disconnected,,,,,,
+3,2,three-bit census,0 2 4 6 3 1 7 5,192,periodic,7,,,,,
+3,3,three-bit census,0 2 4 6 3 1 7 5,192,disconnected,,,,,,
+3,2,three-bit census,0 2 4 6 5 7 1 3,192,periodic,7,,,,,
+3,3,three-bit census,0 2 4 6 5 7 1 3,192,disconnected,,,,,,
+4,2,four-bit inverse,0 1 9 14 13 11 7 6 15 2 12 5 10 4 3 8,1,mixing,1,4,13,24,47,92
+4,3,four-bit inverse,0 1 9 14 13 11 7 6 15 2 12 5 10 4 3 8,1,mixing,1,5,14,26,49,95
+4,2,four-bit draw 1,9 11 2 4 13 10 8 7 14 15 3 12 0 1 5 6,1,mixing,1,5,13,24,45,89
+4,3,four-bit draw 1,9 11 2 4 13 10 8 7 14 15 3 12 0 1 5 6,1,mixing,1,6,13,24,46,89
+4,2,four-bit draw 2,14 2 11 10 15 6 9 1 12 4 3 13 5 0 8 7,1,mixing,1,5,12,22,42,82
+4,3,four-bit draw 2,14 2 11 10 15 6 9 1 12 4 3 13 5 0 8 7,1,mixing,1,5,12,22,42,83
+4,2,four-bit draw 3,10 5 8 12 11 14 9 4 2 13 0 3 6 15 1 7,1,mixing,1,7,20,37,70,138
+4,3,four-bit draw 3,10 5 8 12 11 14 9 4 2 13 0 3 6 15 1 7,1,mixing,1,7,20,37,70,138
+4,2,four-bit draw 4,14 0 8 12 7 13 3 2 6 10 9 5 4 11 15 1,1,mixing,1,6,18,35,69,138
+4,3,four-bit draw 4,14 0 8 12 7 13 3 2 6 10 9 5 4 11 15 1,1,mixing,1,6,19,36,70,138
+4,2,four-bit draw 5,11 10 3 1 14 5 0 13 8 2 7 15 4 9 12 6,1,mixing,1,5,15,29,56,110
+4,3,four-bit draw 5,11 10 3 1 14 5 0 13 8 2 7 15 4 9 12 6,1,mixing,1,6,16,29,56,110
+4,2,four-bit draw 6,12 11 10 9 5 7 2 15 3 14 1 6 4 0 8 13,1,mixing,1,5,12,22,43,85
+4,3,four-bit draw 6,12 11 10 9 5 7 2 15 3 14 1 6 4 0 8 13,1,mixing,1,5,13,23,44,85
+4,2,four-bit draw 7,10 8 5 15 9 4 6 0 2 7 1 3 13 14 11 12,1,mixing,1,5,13,23,44,87
+4,3,four-bit draw 7,10 8 5 15 9 4 6 0 2 7 1 3 13 14 11 12,1,mixing,1,6,13,24,45,87
+4,2,four-bit draw 8,13 10 9 0 3 11 1 12 15 6 5 14 8 7 2 4,1,mixing,1,5,12,22,41,80
+4,3,four-bit draw 8,13 10 9 0 3 11 1 12 15 6 5 14 8 7 2 4,1,mixing,1,5,13,22,42,81

@@ -31,20 +31,21 @@ def representatives():
         yield p, SIZE * len(orbit)
 
 
-def normalized_starts(t, ids):
+def normalized_starts(t, ids, domain_size=SIZE):
     """One ordering per translation class of unordered input sets for worst-start TV."""
     starts = set()
-    for subset in combinations(range(SIZE), t):
+    for subset in combinations(range(domain_size), t):
         shifted = min(tuple(sorted(x ^ a for x in subset)) for a in subset)
         starts.add(ids[bytes(shifted[1:])])
     return sorted(starts)
 
 
-def measure(p, shapes, ids, starts):
+def measure(p, shapes, ids, starts, denominators=DENOMINATORS):
+    domain_size = len(p)
     size = len(shapes)
     steps = []
-    for x in range(SIZE):
-        table = bytes(p[x] ^ p[x ^ a] for a in range(SIZE)) + bytes(256 - SIZE)
+    for x in range(domain_size):
+        table = bytes(p[x] ^ p[x ^ a] for a in range(domain_size)) + bytes(256 - domain_size)
         steps.append([ids[s.translate(table)] for s in shapes])
     edges = np.asarray(steps, dtype=np.int32)
     decision = classify_support(size, lambda a: (int(b) + 1 for b in edges[:, a - 1]))
@@ -56,20 +57,20 @@ def measure(p, shapes, ids, starts):
     counts[np.arange(len(starts)), starts] = 1
     key_sequences, rounds = 1, 0
     hits = []
-    while len(hits) < len(DENOMINATORS):
+    while len(hits) < len(denominators):
         # Row sums of abs(size * counts - key_sequences) are <= 2 * size * key_sequences.
         if counts.dtype != object and 2 * size * key_sequences > np.iinfo(np.int64).max:
             counts = counts.astype(object)
         deviation = int(np.abs(size * counts - key_sequences).sum(axis=1).max())
-        while len(hits) < len(DENOMINATORS) and deviation * DENOMINATORS[len(hits)] <= 2 * size * key_sequences:
+        while len(hits) < len(denominators) and deviation * denominators[len(hits)] <= 2 * size * key_sequences:
             hits.append(rounds + 1)  # convert difference rounds to full cipher rounds
-        if len(hits) == len(DENOMINATORS):
+        if len(hits) == len(denominators):
             break
-        if counts.dtype != object and key_sequences * SIZE > np.iinfo(np.int64).max:
+        if counts.dtype != object and key_sequences * domain_size > np.iinfo(np.int64).max:
             counts = counts.astype(object)
         counts = sum((counts[:, pred] for pred in predecessors), np.zeros_like(counts))
         rounds += 1
-        key_sequences *= SIZE
+        key_sequences *= domain_size
     return decision.status, decision.period, tuple(hits)
 
 

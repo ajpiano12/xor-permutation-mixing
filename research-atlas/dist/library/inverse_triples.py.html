@@ -54,7 +54,7 @@ def main():
     add_table_arguments(parser)
     parser.add_argument(&quot;--modulus&quot;, required=True, type=lambda s: int(s, 0),
                         help=&quot;binary field modulus, e.g. 0x25 for X^5 + X^2 + 1&quot;)
-    parser.add_argument(&quot;--epsilon&quot;, type=Fraction, default=Fraction(1, 4))
+    parser.add_argument(&quot;--epsilon&quot;, type=Fraction, default=Fraction(1, 1 &lt;&lt; 128), help=&quot;target TV (default 2^-128)&quot;)
     args = parser.parse_args()
     if not 0 &lt; args.epsilon &lt; 1:
         parser.error(&quot;epsilon must lie strictly between zero and one&quot;)

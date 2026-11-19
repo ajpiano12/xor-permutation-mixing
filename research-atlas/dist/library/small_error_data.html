@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#122f35"><title>Exact pair and triple mixing at small error · Difference Atlas</title>
+<link rel="icon" href="../mark.svg"><link rel="stylesheet" href="../reader.css"></head>
+<body><a class="skip" href="#document">Skip to document</a><header><div class="bar">
+<a class="brand" href="../index.html#map"><img src="../mark.svg" width="33" height="33" alt="">Difference Atlas</a>
+<nav aria-label="Atlas"><a href="../index.html#map">Research map</a><a href="../index.html#library">Proof library</a></nav>
+</div></header><div class="layout"><aside><div class="meta">Research note</div>
+<p class="filename">SMALL_ERROR_DATA.md</p><a download="SMALL_ERROR_DATA.md" href="raw/SMALL_ERROR_DATA.md">Download source</a><nav class="toc" aria-label="Sections"><h2>On this page</h2><ul><li><a href="#exhaustive-results-on-three-bits">Exhaustive results on three bits</a></li><li><a href="#an-obstruction-visible-to-ordered-triples">An obstruction visible to ordered triples</a></li><li><a href="#why-the-faster-triple-family-gains-ground">Why the faster triple family gains ground</a></li><li><a href="#four-bits-as-a-check-on-transfer">Four bits as a check on transfer</a></li><li><a href="#exact-arithmetic-and-attribution">Exact arithmetic and attribution</a></li></ul></nav></aside>
+<main id="document" tabindex="-1"><h1 id="exact-pair-and-triple-mixing-at-small-error">Exact pair and triple mixing at small error</h1>
+<p>At TV at most <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mn>2</mn><mrow><mi>−</mi><mn>128</mn></mrow></msup><annotation encoding="application/x-tex">2^{-128}</annotation></semantics></math>, the fastest three-bit tables for pairs take <strong>87 cipher rounds</strong>. The fastest three-bit tables for triples take <strong>88 rounds</strong>, and constitute a different family. The 10,752 almost perfect nonlinear (APN) permutations attain the pair minimum. Each needs <strong>129 rounds</strong> for triples. Another 10,752 permutations reach the triple target in 88 rounds. Both families reached the old triple threshold of <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mi>/</mi><mn>4</mn></mrow><annotation encoding="application/x-tex">1/4</annotation></semantics></math> in four rounds, so that threshold concealed a 41-round difference at higher precision.</p>
+<p>All distances here maximize over every ordered distinct starting tuple for the fixed public permutation. Each cipher round draws a fresh independent XOR key shared by the inputs. The thresholds <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mn>2</mn><mrow><mi>−</mi><mn>16</mn></mrow></msup><mo>,</mo><msup><mn>2</mn><mrow><mi>−</mi><mn>32</mn></mrow></msup><mo>,</mo><msup><mn>2</mn><mrow><mi>−</mi><mn>64</mn></mrow></msup><mo>,</mo><msup><mn>2</mn><mrow><mi>−</mi><mn>128</mn></mrow></msup></mrow><annotation encoding="application/x-tex">2^{-16},2^{-32},2^{-64},2^{-128}</annotation></semantics></math> compare different error budgets on the same table. We also report <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mn>2</mn><mrow><mi>−</mi><mi>n</mi></mrow></msup><annotation encoding="application/x-tex">2^{-n}</annotation></semantics></math> in the data to give a target that scales with bit length. <a href="results/small_error_times.csv">Exact measurements</a></p>
+<h2 id="exhaustive-results-on-three-bits">Exhaustive results on three bits</h2>
+<p>Each cell gives the exact first full cipher round at or below the indicated threshold. The grouped rows cover all 32,256 mixing tables at each order. The other 8,064 tables at each order fail to mix. The CSV gives their support status and the rows for the 20 original symmetry classes.</p>
+<table>
+<thead>
+<tr>
+<th>Tuple order</th>
+<th style="text-align: right;">Number of tables</th>
+<th style="text-align: right;"><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mn>2</mn><mrow><mi>−</mi><mn>16</mn></mrow></msup><annotation encoding="application/x-tex">2^{-16}</annotation></semantics></math></th>
+<th style="text-align: right;"><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mn>2</mn><mrow><mi>−</mi><mn>32</mn></mrow></msup><annotation encoding="application/x-tex">2^{-32}</annotation></semantics></math></th>
+<th style="text-align: right;"><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mn>2</mn><mrow><mi>−</mi><mn>64</mn></mrow></msup><annotation encoding="application/x-tex">2^{-64}</annotation></semantics></math></th>
+<th style="text-align: right;"><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mn>2</mn><mrow><mi>−</mi><mn>128</mn></mrow></msup><annotation encoding="application/x-tex">2^{-128}</annotation></semantics></math></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pair</td>
+<td style="text-align: right;">10,752</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">23</td>
+<td style="text-align: right;">44</td>
+<td style="text-align: right;">87</td>
+</tr>
+<tr>
+<td>Pair</td>
+<td style="text-align: right;">10,752</td>
+<td style="text-align: right;">13</td>
+<td style="text-align: right;">24</td>
+<td style="text-align: right;">45</td>
+<td style="text-align: right;">88</td>
+</tr>
+<tr>
+<td>Pair</td>
+<td style="text-align: right;">5,376</td>
+<td style="text-align: right;">18</td>
+<td style="text-align: right;">34</td>
+<td style="text-align: right;">66</td>
+<td style="text-align: right;">130</td>
+</tr>
+<tr>
+<td>Pair</td>
+<td style="text-align: right;">5,376</td>
+<td style="text-align: right;">19</td>
+<td style="text-align: right;">35</td>
+<td style="text-align: right;">67</td>
+<td style="text-align: right;">131</td>
+</tr>
+<tr>
+<td>Triple</td>
+<td style="text-align: right;">10,752</td>
+<td style="text-align: right;">14</td>
+<td style="text-align: right;">24</td>
+<td style="text-align: right;">46</td>
+<td style="text-align: right;">88</td>
+</tr>
+<tr>
+<td>Triple</td>
+<td style="text-align: right;">10,752</td>
+<td style="text-align: right;">17</td>
+<td style="text-align: right;">33</td>
+<td style="text-align: right;">65</td>
+<td style="text-align: right;">129</td>
+</tr>
+<tr>
+<td>Triple</td>
+<td style="text-align: right;">5,376</td>
+<td style="text-align: right;">19</td>
+<td style="text-align: right;">35</td>
+<td style="text-align: right;">67</td>
+<td style="text-align: right;">131</td>
+</tr>
+<tr>
+<td>Triple</td>
+<td style="text-align: right;">5,376</td>
+<td style="text-align: right;">20</td>
+<td style="text-align: right;">36</td>
+<td style="text-align: right;">68</td>
+<td style="text-align: right;">132</td>
+</tr>
+</tbody>
+</table>
+<h2 id="an-obstruction-visible-to-ordered-triples">An obstruction visible to ordered triples</h2>
+<p>A triple determines two distinct nonzero binary differences <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>a</mi><mo>,</mo><mi>b</mi></mrow><annotation encoding="application/x-tex">a,b</annotation></semantics></math> and a plane whose three nonzero elements are <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>a</mi><mo>,</mo><mi>b</mi><mo>,</mo><mi>a</mi><mo>+</mo><mi>b</mi></mrow><annotation encoding="application/x-tex">a,b,a+b</annotation></semantics></math>. There are seven planes at three bits. Each plane admits six ordered bases. Use the ascending ordering of its three nonzero elements as a reference. The sign of an ordered basis is the parity of the ordering <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="true" form="prefix">(</mo><mi>a</mi><mo>,</mo><mi>b</mi><mo>,</mo><mi>a</mi><mo>+</mo><mi>b</mi><mo stretchy="true" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">(a,b,a+b)</annotation></semantics></math> relative to the reference.</p>
+<p>Define a seven-by-seven matrix <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>S</mi><annotation encoding="application/x-tex">S</annotation></semantics></math>. Start from the reference basis of plane <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>i</mi><annotation encoding="application/x-tex">i</annotation></semantics></math>, take one difference step, and set <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>S</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><annotation encoding="application/x-tex">S_{ij}</annotation></semantics></math> equal to the probability of landing in plane <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>j</mi><annotation encoding="application/x-tex">j</annotation></semantics></math> with positive sign minus that of landing there with negative sign. Reordering the three inputs commutes with the random keyed map, including when the reordering changes the base point used for the differences. This reordering acts as the same permutation, up to a fixed identification, on the three nonzero differences, so a transposition reverses their sign. The vector of signed probabilities after <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>s</mi><annotation encoding="application/x-tex">s</annotation></semantics></math> steps from any basis of plane <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>i</mi><annotation encoding="application/x-tex">i</annotation></semantics></math> is therefore the <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>i</mi><annotation encoding="application/x-tex">i</annotation></semantics></math>th row of <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>S</mi><mi>s</mi></msup><annotation encoding="application/x-tex">S^s</annotation></semantics></math>, up to the starting sign. Uniform has zero signed probability in each plane.</p>
+<p>For <strong>every three-bit APN permutation</strong>, direct integer multiplication gives</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mo stretchy="true" form="prefix">(</mo><mn>8</mn><mi>S</mi><mo stretchy="true" form="postfix">)</mo></mrow><msup><mrow><mo stretchy="true" form="prefix">(</mo><mn>8</mn><mi>S</mi><mo stretchy="true" form="postfix">)</mo></mrow><mi>𝖳</mi></msup><mo>=</mo><mn>16</mn><mi>I</mi><mi>.</mi></mrow><annotation encoding="application/x-tex"> (8S)(8S)^\mathsf{T}=16I. </annotation></semantics></math></p>
+<p>The verification uses four representatives, covering all 10,752 APN permutations. A translation of the input or output preserves the shape kernel, and conjugating by a linear map relabels the planes and their orientation signs. This preserves the matrix identity. Thus <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>2</mn><mi>S</mi></mrow><annotation encoding="application/x-tex">2S</annotation></semantics></math> is orthogonal and the signed-probability vector after <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>s</mi><annotation encoding="application/x-tex">s</annotation></semantics></math> steps has Euclidean norm <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mn>2</mn><mrow><mi>−</mi><mi>s</mi></mrow></msup><annotation encoding="application/x-tex">2^{-s}</annotation></semantics></math>. Its sum of absolute entries is at least that large. This sum is bounded above by twice the TV distance, by grouping the positive- and negative-sign states within each plane. Since full-round TV at <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>r</mi><annotation encoding="application/x-tex">r</annotation></semantics></math> equals shape TV at <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>s</mi><mo>=</mo><mi>r</mi><mo>−</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">s=r-1</annotation></semantics></math>, <strong>every starting triple</strong> of every three-bit APN permutation satisfies</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>r</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>≥</mo><msup><mn>2</mn><mrow><mi>−</mi><mi>r</mi></mrow></msup><mspace width="2.0em"></mspace><mrow><mo stretchy="true" form="prefix">(</mo><mi>r</mi><mo>≥</mo><mn>1</mn><mo stretchy="true" form="postfix">)</mo></mrow><mi>.</mi></mrow><annotation encoding="application/x-tex"> d(r)\ge 2^{-r}\qquad(r\ge1). </annotation></semantics></math></p>
+<p>This explains why improving the target from <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mn>2</mn><mrow><mi>−</mi><mn>64</mn></mrow></msup><annotation encoding="application/x-tex">2^{-64}</annotation></semantics></math> to <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mn>2</mn><mrow><mi>−</mi><mn>128</mn></mrow></msup><annotation encoding="application/x-tex">2^{-128}</annotation></semantics></math> costs this family another 64 rounds. The pair result uses a different observable, the derivative hyperplane, and its decay factor is <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mi>/</mi><msqrt><mn>8</mn></msqrt></mrow><annotation encoding="application/x-tex">1/\sqrt 8</annotation></semantics></math> per step. <a href="quadratic_certificate.html">Pairwise certificate</a></p>
+<h2 id="why-the-faster-triple-family-gains-ground">Why the faster triple family gains ground</h2>
+<p>Consider the representative <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="true" form="prefix">(</mo><mn>0</mn><mo>,</mo><mn>1</mn><mo>,</mo><mn>2</mn><mo>,</mo><mn>4</mn><mo>,</mo><mn>5</mn><mo>,</mo><mn>6</mn><mo>,</mo><mn>7</mn><mo>,</mo><mn>3</mn><mo stretchy="true" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">(0,1,2,4,5,6,7,3)</annotation></semantics></math> of the other 10,752-table family. Its signed matrix satisfies <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>S</mi><mn>2</mn></msup><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">S^2=0</annotation></semantics></math>. Its full triple-shape matrix <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>Q</mi><annotation encoding="application/x-tex">Q</annotation></semantics></math> is an average of eight permutation matrices on the 42 ordered shapes. Set <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>B</mi><mo>=</mo><mn>8</mn><mi>Q</mi></mrow><annotation encoding="application/x-tex">B=8Q</annotation></semantics></math>. The verifier constructs this matrix from the representative and checks the following exact identities.</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>H</mi><mo>=</mo><msup><mi>B</mi><mn>2</mn></msup><mrow><mo stretchy="true" form="prefix">(</mo><mi>B</mi><mo>−</mo><mn>8</mn><mi>I</mi><mo stretchy="true" form="postfix">)</mo></mrow><mrow><mo stretchy="true" form="prefix">(</mo><mi>B</mi><mo>+</mo><mi>I</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>≠</mo><mn>0</mn><mo>,</mo><mspace width="2.0em"></mspace><mi>H</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>B</mi><mn>2</mn></msup><mo>−</mo><mn>8</mn><mi>I</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mn>0</mn><mi>.</mi></mrow><annotation encoding="application/x-tex"> H=B^2(B-8I)(B+I)\ne 0,\qquad H(B^2-8I)=0. </annotation></semantics></math></p>
+<p>Consequently the only possible eigenvalues of <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>B</mi><annotation encoding="application/x-tex">B</annotation></semantics></math> are <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0</mn><mo>,</mo><mn>8</mn><mo>,</mo><mi>−</mi><mn>1</mn><mo>,</mo><msqrt><mn>8</mn></msqrt><mo>,</mo><mi>−</mi><msqrt><mn>8</mn></msqrt></mrow><annotation encoding="application/x-tex">0,8,-1,\sqrt8,-\sqrt8</annotation></semantics></math>. At least one of the last two occurs since <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>H</mi><mo>≠</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">H\ne0</annotation></semantics></math>. The nonzero roots of the annihilating polynomial are simple, so their Jordan blocks have size one. The support check confirms irreducibility and aperiodicity, and the stationary projection is uniform. The spectral radius on the zero-sum space of <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>Q</mi><annotation encoding="application/x-tex">Q</annotation></semantics></math> is therefore exactly <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mi>/</mi><msqrt><mn>8</mn></msqrt></mrow><annotation encoding="application/x-tex">1/\sqrt8</annotation></semantics></math>. Writing <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>U</mi><annotation encoding="application/x-tex">U</annotation></semantics></math> for the uniform matrix, twice the worst-start shape TV equals the induced row-sum norm <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mrow><mo stretchy="true" form="prefix">‖</mo><msup><mi>Q</mi><mi>s</mi></msup><mo>−</mo><mi>U</mi><mo stretchy="true" form="postfix">‖</mo></mrow><mi>∞</mi></msub><annotation encoding="application/x-tex">\lVert Q^s-U\rVert_\infty</annotation></semantics></math>. The eigenspace decomposition bounds this norm above by a constant times <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mn>8</mn><mrow><mi>−</mi><mi>s</mi><mi>/</mi><mn>2</mn></mrow></msup><annotation encoding="application/x-tex">8^{-s/2}</annotation></semantics></math> for <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>s</mi><mo>≥</mo><mn>2</mn></mrow><annotation encoding="application/x-tex">s\ge2</annotation></semantics></math>, and its spectral radius gives the matching lower bound. Thus this family's triple distance gains asymptotically 1.5 bits of precision per round. The two small matrix checks explain the observed separation independently of extrapolating the four measured cutoffs. <a href="small_error_census.py.html">Integer verification</a></p>
+<h2 id="four-bits-as-a-check-on-transfer">Four bits as a check on transfer</h2>
+<p>On four bits, the patched inverse uses the polynomial basis modulo <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>X</mi><mn>4</mn></msup><mo>+</mo><mi>X</mi><mo>+</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">X^4+X+1</annotation></semantics></math>. The eight random tables below are the <strong>first eight</strong> from the previously recorded, seeded four-bit sample. Each range reports the minimum and maximum of eight exact worst-start hitting times.</p>
+<table>
+<thead>
+<tr>
+<th>Table or sample</th>
+<th>Order</th>
+<th style="text-align: right;"><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mn>2</mn><mrow><mi>−</mi><mn>16</mn></mrow></msup><annotation encoding="application/x-tex">2^{-16}</annotation></semantics></math></th>
+<th style="text-align: right;"><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mn>2</mn><mrow><mi>−</mi><mn>32</mn></mrow></msup><annotation encoding="application/x-tex">2^{-32}</annotation></semantics></math></th>
+<th style="text-align: right;"><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mn>2</mn><mrow><mi>−</mi><mn>64</mn></mrow></msup><annotation encoding="application/x-tex">2^{-64}</annotation></semantics></math></th>
+<th style="text-align: right;"><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mn>2</mn><mrow><mi>−</mi><mn>128</mn></mrow></msup><annotation encoding="application/x-tex">2^{-128}</annotation></semantics></math></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Field inverse</td>
+<td>Pair</td>
+<td style="text-align: right;">13</td>
+<td style="text-align: right;">24</td>
+<td style="text-align: right;">47</td>
+<td style="text-align: right;">92</td>
+</tr>
+<tr>
+<td>Field inverse</td>
+<td>Triple</td>
+<td style="text-align: right;">14</td>
+<td style="text-align: right;">26</td>
+<td style="text-align: right;">49</td>
+<td style="text-align: right;">95</td>
+</tr>
+<tr>
+<td>First eight sampled tables</td>
+<td>Pair</td>
+<td style="text-align: right;">12–20</td>
+<td style="text-align: right;">22–37</td>
+<td style="text-align: right;">41–70</td>
+<td style="text-align: right;">80–138</td>
+</tr>
+<tr>
+<td>First eight sampled tables</td>
+<td>Triple</td>
+<td style="text-align: right;">12–20</td>
+<td style="text-align: right;">22–37</td>
+<td style="text-align: right;">42–70</td>
+<td style="text-align: right;">81–138</td>
+</tr>
+</tbody>
+</table>
+<p>This small comparison checks how pair and triple rates behave within the same tables. Estimating a four-bit population distribution would require a larger sample.</p>
+<h2 id="exact-arithmetic-and-attribution">Exact arithmetic and attribution</h2>
+<p>The program uses the existing enumeration up to input and output translations and binary linear conjugacy. For each representative and order <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>t</mi><annotation encoding="application/x-tex">t</annotation></semantics></math>, one state records the <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>t</mi><mo>−</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">t-1</annotation></semantics></math> ordered differences from a base input. For worst-start TV, translations and input reorderings allow one start per translation class of unordered input sets. At difference step <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>s</mi><annotation encoding="application/x-tex">s</annotation></semantics></math> let <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>c</mi><mi>y</mi></msub><annotation encoding="application/x-tex">c_y</annotation></semantics></math> count paths to shape <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>y</mi><annotation encoding="application/x-tex">y</annotation></semantics></math>, let <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>m</mi><annotation encoding="application/x-tex">m</annotation></semantics></math> be the number of shapes and let <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>K</mi><mo>=</mo><msup><mi>N</mi><mi>s</mi></msup></mrow><annotation encoding="application/x-tex">K=N^s</annotation></semantics></math> with <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi><mo>=</mo><msup><mn>2</mn><mi>n</mi></msup></mrow><annotation encoding="application/x-tex">N=2^n</annotation></semantics></math>. The program compares <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mn>2</mn><mi>k</mi></msup><msub><mo>∑</mo><mi>y</mi></msub><mrow><mo stretchy="true" form="prefix">|</mo><mi>m</mi><msub><mi>c</mi><mi>y</mi></msub><mo>−</mo><mi>K</mi><mo stretchy="true" form="postfix">|</mo></mrow></mrow><annotation encoding="application/x-tex">2^k\sum_y|mc_y-K|</annotation></semantics></math> with <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>2</mn><mi>m</mi><mi>K</mi></mrow><annotation encoding="application/x-tex">2mK</annotation></semantics></math> using integers, switching from 64-bit to arbitrary precision before overflow. This determines exactly when error crosses <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mn>2</mn><mrow><mi>−</mi><mi>k</mi></mrow></msup><annotation encoding="application/x-tex">2^{-k}</annotation></semantics></math>. An independent regression check reproduces the three-bit inverse pair results from its closed-form distances. <a href="higher_census.html">Higher-order census method</a></p>
+<p>Run the following command from the repository root.</p>
+<pre class="sh"><code>uv run --locked --extra four-bit -m research.small_error_census</code></pre>
+<p>O’Connor reported the 10,752 three-bit APN permutations and studied pairwise differential convergence. The small-error census, the signed orientation identities for triples and the finite matrix verification above are project computations. Publication priority for these specific results remains unverified. <a href="https://doi.org/10.1007/3-540-49264-X_2">O’Connor, EUROCRYPT 1995</a></p>
+</main></div></body></html>

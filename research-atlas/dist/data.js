@@ -1,6 +1,11 @@
 window.ATLAS = {
   "branches": [
     {
+      "id": "precision",
+      "title": "Small-error guarantees",
+      "summary": "Check one public permutation and bound its worst tuple distance at a specified round."
+    },
+    {
       "id": "model",
       "title": "Foundations",
       "summary": "Follow ordered distinct inputs through the same keyed rounds."
@@ -22,6 +27,162 @@ window.ATLAS = {
     }
   ],
   "topics": [
+    {
+      "id": "small-error",
+      "branch": "precision",
+      "title": "Problem 4 at small error",
+      "status": "Reviewed",
+      "provenance": "Project derivation",
+      "summary": "Which condition on one fixed permutation guarantees worst-start TV at most 2⁻¹²⁸?",
+      "body": [
+        "The brief asks for an explicit round count and allows restricted classes. We compare bounds at 2⁻³², 2⁻⁶⁴ and 2⁻¹²⁸, and ask how the count changes when the target is 2⁻ⁿ.",
+        "The leading construction covers four or more inputs and can be checked directly from a compact description. Integer counts on small tables show how rankings can change when the threshold shrinks."
+      ],
+      "attribution": "The project brief supplies the model and allows any positive error target. This research assessment links each construction to its own evidence and priority review.",
+      "resources": [
+        {
+          "label": "Read the results against the brief",
+          "href": "library/brief_and_progress.html",
+          "kind": "Notes"
+        },
+        {
+          "label": "Fixed-permutation higher-order construction",
+          "href": "library/spectral_certificate.html",
+          "kind": "Proof"
+        },
+        {
+          "label": "Lower bound from finite key counts",
+          "href": "library/brief_and_progress.html#why-exact-independence-fails-and-a-precision-dependent-lower-bound",
+          "kind": "Notes"
+        }
+      ],
+      "sourceIds": [
+        "ltv",
+        "inverse"
+      ]
+    },
+    {
+      "id": "switch-certificate",
+      "branch": "precision",
+      "title": "A checkable four-input construction",
+      "status": "Proved",
+      "provenance": "Project derivation",
+      "summary": "One specified 128-bit permutation certifies triples in 81 rounds and quadruples in 129 rounds at TV 2⁻¹²⁸.",
+      "body": [
+        "XOR a 16-bit projection of a field inverse into the low block, then rotate. Fresh XOR keys translate the arguments of this same update on every round.",
+        "The proof bounds parity biases for the translated update and compares two sweeps with independent switch decisions. At error 2⁻ⁿ the construction needs O(t) rounds for all sufficiently large widths and 2 ≤ t ≤ n/2 − 1, choosing the block width for the desired order."
+      ],
+      "attribution": "Thorp shuffles, unbalanced Feistel mixing, nearly independent permutations and character-sum estimates are published. The application using a specific repeated inverse-projection update and the finite constants are project derivations with unverified priority.",
+      "resources": [
+        {
+          "label": "Construction, two-sweep proof and finite bounds",
+          "href": "library/spectral_certificate.html",
+          "kind": "Proof"
+        },
+        {
+          "label": "Compact and table verifier",
+          "href": "library/spectral_certificate.py.html",
+          "kind": "Code"
+        }
+      ],
+      "sourceIds": [
+        "thorp",
+        "feistel",
+        "knr"
+      ]
+    },
+    {
+      "id": "power-precision",
+      "branch": "precision",
+      "title": "Five rounds for a 128-bit seventh power",
+      "status": "Proved",
+      "provenance": "Corollary",
+      "summary": "The field seventh power brings every pair within 2⁻¹²⁸ in at most five rounds, even after up to 2⁶² table changes.",
+      "body": [
+        "All difference rows of a field power follow from one derivative distribution. A multiplicative character bound gives a certificate using only the width and the exponent.",
+        "On 128 bits field inversion needs exactly four rounds at error 2⁻¹²⁸. On eight bits that same numerical threshold needs 35 rounds for the inverse and 56 for the seventh power."
+      ],
+      "attribution": "The calculation applies published character-sum bounds and the differential structure of field powers. The small-width hitting times use exact integer convolution.",
+      "resources": [
+        {
+          "label": "Fourier calculation and perturbation bound",
+          "href": "library/power_certificate.html",
+          "kind": "Proof"
+        },
+        {
+          "label": "Check a table or a compact power",
+          "href": "library/power_mixing.py.html",
+          "kind": "Code"
+        }
+      ],
+      "sourceIds": [
+        "weil",
+        "ltv"
+      ]
+    },
+    {
+      "id": "powers-all-orders",
+      "branch": "precision",
+      "title": "Which field powers mix at every order?",
+      "status": "Proved",
+      "provenance": "Corollary",
+      "summary": "Every nonlinear field power that permutes n-bit strings, n ≥ 3, mixes all tuple sizes through 2ⁿ−2.",
+      "body": [
+        "Checking whether the reduced exponent is a power of two decides eventual mixing. A uniform finite-time bound covers the nonlinear cases but is numerically loose.",
+        "For five-bit cubing the exact 2⁻¹²⁸ hitting times are 66 rounds for triples and 67 for quadruples. At three bits the corresponding times are 129 and 258."
+      ],
+      "attribution": "Stafford classified the group generated by field powers and affine maps. Normality gives the repeated-key-schedule corollary. The higher-order finite-width measurements are project computations.",
+      "resources": [
+        {
+          "label": "Normal-closure proof and exact measurements",
+          "href": "library/structured_small_error.html",
+          "kind": "Proof"
+        },
+        {
+          "label": "Higher-order power verifier",
+          "href": "library/structured_probe.py.html",
+          "kind": "Code"
+        }
+      ],
+      "sourceIds": [
+        "stafford",
+        "ltv",
+        "inverse"
+      ]
+    },
+    {
+      "id": "tiny-census",
+      "branch": "precision",
+      "title": "What the smaller threshold reveals",
+      "status": "Measured",
+      "provenance": "Project experiment",
+      "summary": "Two families that tie at TV 1/4 take 88 and 129 rounds to mix triples at TV 2⁻¹²⁸.",
+      "body": [
+        "Each family contains 10,752 three-bit permutations. The slower triple family is the same one that mixes pairs fastest.",
+        "A signed statistic on ordered triples retains information in the slower family. Exact integer paths and small-matrix identities explain the separation."
+      ],
+      "attribution": "O’Connor already enumerated the three-bit APN permutations. The small-error triple profiles and the signed statistic were computed in this project.",
+      "resources": [
+        {
+          "label": "Tiny-error times and signed orientation proof",
+          "href": "library/small_error_data.html",
+          "kind": "Notes"
+        },
+        {
+          "label": "Small-error results",
+          "href": "library/results/small_error_times.csv",
+          "kind": "Data"
+        },
+        {
+          "label": "Exact census program",
+          "href": "library/small_error_census.py.html",
+          "kind": "Code"
+        }
+      ],
+      "sourceIds": [
+        "oc95"
+      ]
+    },
     {
       "id": "difference-walk",
       "branch": "model",
@@ -755,9 +916,9 @@ window.ATLAS = {
       "summary": "Typical tables need three rounds for pairs and four for triples at TV 1/4. Does a similar rule hold for quadruples?",
       "body": [
         "Ordered quadruples on binary vectors can form an affine plane or be affinely independent. A worst-start result must cover both kinds.",
-        "The field inverse already shows that fast triple mixing can coexist with very slow quadruple mixing. The open question here concerns a typical uniform fixed table or a checkable sufficient condition on an individual table."
+        "The field inverse already shows that fast triple mixing can coexist with very slow quadruple mixing. The open question here concerns the round count for a typical uniform fixed table. The small-error branch gives a separate explicit family with a four-input certificate."
       ],
-      "attribution": "The inverse lower bound is published. A general finite-round quadruple criterion and the typical round count are open in this project.",
+      "attribution": "The inverse lower bound is published. The typical random-table round count for quadruples remains open.",
       "resources": [
         {
           "label": "Research agenda and literature",
@@ -913,10 +1074,50 @@ window.ATLAS = {
       "year": "2023",
       "url": "https://eprint.iacr.org/2024/083",
       "note": "Treats equality constraints across tuples in an SPN and identifies where independent random substitutions enter."
+    },
+    {
+      "id": "thorp",
+      "title": "How to Encipher Messages on a Small Domain — Deterministic Encryption and the Thorp Shuffle",
+      "authors": "Ben Morris, Phillip Rogaway and Till Stegers",
+      "year": "2009",
+      "url": "https://www.cs.ucdavis.edu/~rogaway/papers/thorp.pdf",
+      "note": "The independent-switch Thorp shuffle and its multi-point coupling."
+    },
+    {
+      "id": "feistel",
+      "title": "On Generalized Feistel Networks",
+      "authors": "Viet Tung Hoang and Phillip Rogaway",
+      "year": "2010",
+      "url": "https://www.cs.ucdavis.edu/~rogaway/papers/feistel.pdf",
+      "note": "Includes unbalanced Feistel networks in a random-function model."
+    },
+    {
+      "id": "knr",
+      "title": "Derandomized Constructions of k-Wise (Almost) Independent Permutations",
+      "authors": "Eyal Kaplan, Moni Naor and Omer Reingold",
+      "year": "2009",
+      "url": "https://www.wisdom.weizmann.ac.il/~naor/PAPERS/kwise.pdf",
+      "note": "Constructs small families of nearly independent permutations."
+    },
+    {
+      "id": "stafford",
+      "title": "Groups of Permutation Polynomials over Finite Fields",
+      "authors": "R. M. Stafford",
+      "year": "1998",
+      "url": "https://doi.org/10.1006/ffta.1998.0224",
+      "note": "Classifies groups generated by the affine field maps and a permuting power."
+    },
+    {
+      "id": "weil",
+      "title": "Superpolynomial Lower Bounds for Monotone Span Programs, Theorem 3.7",
+      "authors": "László Babai, Anna Gál and Avi Wigderson",
+      "year": "1999",
+      "url": "https://people.cs.uchicago.edu/~laci/papers/span1.pdf",
+      "note": "Bounds a multiplicative character sum by the number of distinct polynomial roots."
     }
   ],
   "snapshot": {
     "date": "2026-11-18",
-    "revision": "0932ba3b03"
+    "revision": "eb8ef8173d"
   }
 };

@@ -57,7 +57,7 @@ def sufficient_rounds(size, epsilon):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     add_table_arguments(parser)
-    parser.add_argument(&quot;--epsilon&quot;, type=Fraction, default=Fraction(1, 4))
+    parser.add_argument(&quot;--epsilon&quot;, type=Fraction, default=Fraction(1, 1 &lt;&lt; 128), help=&quot;target TV (default 2^-128)&quot;)
     args = parser.parse_args()
     if not 0 &lt; args.epsilon &lt; 1:
         parser.error(&quot;epsilon must be between zero and one&quot;)

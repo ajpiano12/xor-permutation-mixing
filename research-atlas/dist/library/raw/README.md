@@ -2,6 +2,8 @@
 
 The question in problem 4 is whether repeated rounds $x\mapsto P(x\oplus K)$ send every ordered tuple of distinct inputs close to uniform. One public permutation $P$ is fixed throughout, and each round draws a fresh uniform key shared by all inputs.
 
+Our main benchmark is now **worst-start TV at most $2^{-128}$**. The [brief and progress assessment](research/BRIEF_AND_PROGRESS.md) compares four approaches. A [fixed 128-bit block update and rotation](research/SPECTRAL_CERTIFICATE.md) certifies triples in 81 rounds and quadruples in 129. A [field-power certificate](research/POWER_CERTIFICATE.md) proves five rounds suffice for pairs under the 128-bit seventh power. Smaller tables have [exact threshold measurements](research/SMALL_ERROR_DATA.md).
+
 The [literature review and research agenda](research/LITERATURE_REVIEW.md) records published results, project derivations and open questions. The [five-bit count](research/FIVE_BIT_COUNT.md) gives the exact fraction of pairwise nonmixers. The [random-table theorem](research/RATES_AND_LITERATURE.md) gives a sharp typical pairwise round count. For higher orders, see the [three-bit census](research/HIGHER_CENSUS.md), the [all-orders decision algorithm](research/ALGORITHMIC_PRIOR_ART.md), and the [certificate for triples near field inversion](research/TRIPLE_ROUNDS.md). Typical uniform tables need exactly four rounds for triples at TV 1/4. [Upper bound](research/TRIPLE_MOMENT.md) · [Lower bound](research/TRIPLE_LOWER.md)
 
 Explore the [Difference Atlas research map](research-atlas/dist/index.html) for

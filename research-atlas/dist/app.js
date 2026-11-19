@@ -14,7 +14,7 @@
     "Open question": "A question still under investigation."
   };
   const branchTopics = id => topics.filter(topic => topic.branch === id);
-  const primary = topicById.get("three-bit-census") || topics[0];
+  const primary = topicById.get("small-error") || topics[0];
   const tree = document.getElementById("tree");
   const inspector = document.getElementById("inspector");
   const search = document.getElementById("search");

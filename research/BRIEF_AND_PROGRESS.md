@@ -1,0 +1,30 @@
+# Problem 4 at small statistical distance
+
+Page 5 of the project brief fixes **one public permutation** $P$ and draws a fresh uniform $n$-bit XOR key for each round. The target is the largest total variation distance over **all ordered distinct input tuples**. It asks for a simple condition on a given $P$ and an explicit round count, first for pairs and then, if possible, for three or more inputs. It welcomes restricted families. The brief sets no numerical error threshold. Our main finite benchmark is $2^{-128}$, with $2^{-32}$ and $2^{-64}$ as intermediate measurements. We also study $\epsilon=2^{-n}$ as the width grows.
+
+## Which ideas answer the question?
+
+| Direction | What we can check | What it gives at $2^{-128}$ |
+| --- | --- | --- |
+| One repeated block update and rotation | From block width and an irreducible field polynomial, verify a compact construction without enumerating its table. On a supplied table, count deviations and include them in the bound. | The same 128-bit permutation certifies 81 full rounds on triples and 129 on quadruples. [Construction and proof](SPECTRAL_CERTIFICATE.md) |
+| Low-degree field powers for pairs | From $n,d$ alone, bound the rate for a specified power permutation. A table comparison also certifies perturbed powers. | On 128 bits $x^7$ takes at most five rounds, even after up to $2^{62}$ changes. Field inversion takes exactly four. [Character bound and exact verifier](POWER_CERTIFICATE.md) |
+| Field powers at higher order | Check the exponent to decide eventual mixing for all orders. At small widths, group symmetries reduce the exact worst-start calculation. | Cubing at five bits needs 66 rounds on triples and 67 on quadruples. At three bits it needs 129 and 258. A useful large-width rate for cubing on quadruples remains open. [Classification and measurements](STRUCTURED_SMALL_ERROR.md) |
+| All three-bit tables | Enumerate the 20 symmetry classes with exact integer path counts, retaining their full labeled multiplicities. | Two equally large families that tie at $1/4$ on triples need 88 and 129 rounds. A signed orientation statistic explains why the latter retains information longer. [Census and explanation](SMALL_ERROR_DATA.md) |
+
+The **block update and rotation** is the strongest candidate for a paper. For sufficiently large $n$ and $2\le t\le n/2-1$, choose the block width for the largest tuple order of interest. The same public permutation then gives $O(t(1+\log_2(1/\epsilon)/n))$ rounds. In particular $O(t)$ rounds suffice at $\epsilon=2^{-n}$, where counting key sequences already requires at least $t$ rounds. The construction uses an inverse on part of the state. The published lower bound for the repeated inverse on the *entire* state concerns a different permutation. [Proof, finite constants and prior work](SPECTRAL_CERTIFICATE.md) · [Jain et al.](https://eprint.iacr.org/2024/1795)
+
+The next theoretical question is how broad the hypothesis can be. The proof needs small joint parity biases for a few translates of the update function. Field inversion followed by a linear projection proves that condition. A second compact update function satisfying the same condition, or a tighter analysis of the finite two-sweep error, would extend the result directly. The exhaustive data provide checks on what a small-error bound should capture. The exact six-bit count and the limiting three-round distance for random triples are separate directions with less immediate bearing on the brief.
+
+## Why exact independence fails, and a precision-dependent lower bound
+
+Write $N=2^n$. With $r$ finite rounds, each ordered output pair has probability an integer multiple of $1/N^r$. Under a uniform random permutation its probability is $1/[N(N-1)]$. For $n\ge2$ the odd factor $N-1>1$ cannot divide a power of two, so exact pairwise independence is impossible for every $P$.
+
+There is also a quantitative obstruction. One pairwise difference step samples the $N/2$ unordered pairs $\{x,x+a\}$ uniformly, because the two endpoints have the same output difference. After $r$ full cipher rounds the pair TV equals difference TV after $r-1$ steps. Thus this difference law has counts with denominator $D=(N/2)^{r-1}$ on $m=N-1$ states. Write $j=D\bmod m$. Giving each state either $\lfloor D/m\rfloor$ or $\lceil D/m\rceil$ counts minimizes distance to uniform: moving one count from an overfilled state to an underfilled one cannot increase the sum of absolute deviations. The minimum is $j(m-j)/(mD)$. Here $1\le j<m$, so every table has TV at least $(1-1/m)/D$. In particular $\epsilon=2^{-\lambda}$ with integer $\lambda\ge1$ requires
+
+$$ r\ge 1+\left\lceil\frac{\lambda}{n-1}\right\rceil. $$
+
+This gives at least 65 rounds on three bits and 20 on eight bits at $2^{-128}$, before considering the structure of $P$. At every higher tuple order the pair marginal gives the same necessary condition. The counting proof is elementary. The stronger construction-specific upper and lower bounds above distinguish what actually happens.
+
+## Where publication priority stands
+
+The works named in the brief analyze statistical independence of key-alternating ciphers and the inverse walk. Earlier work also analyzes ideal unbalanced Feistel networks, nearly $t$-wise permutation families and keyed Feistel networks with public random functions and oracle access. The project uses those ideas to construct and analyze a **specified, repeatedly reused** public function under the fresh XOR key model. The sources reviewed establish several ingredients. Priority of the combined explicit construction and quantitative specialization remains unverified. [Liu–Tessaro–Vaikuntanathan](https://eprint.iacr.org/2021/507) · [Morris–Rogaway–Stegers](https://www.cs.ucdavis.edu/~rogaway/papers/thorp.pdf) · [Hoang–Rogaway](https://www.cs.ucdavis.edu/~rogaway/papers/feistel.pdf) · [Kaplan–Naor–Reingold](https://www.wisdom.weizmann.ac.il/~naor/PAPERS/kwise.pdf) · [Lampe–Seurin](https://www.iacr.org/archive/fse2014/85400197/85400197.pdf)

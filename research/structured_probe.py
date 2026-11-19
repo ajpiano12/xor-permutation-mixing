@@ -1,0 +1,205 @@
+"""Certify small-error tuple mixing for binary field power permutations."""
+import argparse
+from fractions import Fraction
+from itertools import combinations
+from math import gcd, perm
+
+from classify_mixing import add_table_arguments, read_table_arguments, validated_table
+from power_mixing import field_cycle, field_powers
+
+
+def field_tables(modulus, exponent):
+    import numpy as np
+
+    powers, logs = field_cycle(modulus)
+    order = len(powers)
+    if gcd(exponent, order) != 1:
+        raise ValueError("the power must be coprime to the multiplicative group order")
+    powers = np.asarray(powers)
+    logs = np.asarray(logs[1:])
+    products = np.zeros((order + 1, order + 1), dtype=np.intp)
+    products[1:, 1:] = powers[(logs[:, None] + logs) % order]
+    inverse = np.concatenate(([0], powers[-logs % order]))
+    table = np.concatenate(([0], powers[(exponent % order) * logs % order]))
+    return products, inverse, table
+
+
+def starting_classes(mul, inv, t):
+    """One tuple for each affine, Frobenius and coordinate-permutation class."""
+    import numpy as np
+
+    q = len(mul)
+    n = q.bit_length() - 1
+    seen = set()
+    for rest in combinations(range(2, q), t - 2):
+        if rest in seen:
+            continue
+        points = np.array((0, 1, *rest))
+        yield points
+        for _ in range(n):
+            for origin in points:
+                translated = points ^ origin
+                for scale in translated[translated != 0]:
+                    values = mul[inv[scale], translated]
+                    seen.add(tuple(sorted(map(int, values[values > 1]))))
+            points = mul[points, points]
+
+
+def shape_predecessors(table, t):
+    import numpy as np
+
+    q = len(table)
+    shape = (q,) * (t - 1)
+    axes = np.ogrid[tuple(slice(q) for _ in shape)]
+    valid = np.ones(shape, dtype=bool)
+    for i, axis in enumerate(axes):
+        valid &= axis != 0
+        for previous in axes[:i]:
+            valid &= previous != axis
+    components = np.nonzero(valid)
+    labels = np.full(shape, -1, dtype=np.intp)
+    labels[valid] = np.arange(perm(q - 1, t - 1))
+    inverse = np.argsort(table)
+    x = np.arange(q)
+    predecessors = []
+    for anchor in x:
+        lookup = inverse[table[anchor] ^ x] ^ anchor
+        predecessors.append(labels[tuple(lookup[component] for component in components)])
+    return labels, predecessors
+
+
+def distances(modulus, exponent, t, steps):
+    """Exact worst TV after 0 through steps shape transitions."""
+    import numpy as np
+
+    mul, inv, table = field_tables(modulus, exponent)
+    q = len(table)
+    if t < 2 or t > q or steps < 0:
+        raise ValueError("require 2 <= tuple order <= field size and nonnegative steps")
+    labels, predecessors = shape_predecessors(table, t)
+    m = perm(q - 1, t - 1)
+    worst = [Fraction(0)] * (steps + 1)
+    classes = 0
+    for points in starting_classes(mul, inv, t):
+        classes += 1
+        # C_s = m times the path counts minus q**s. This cancels the common
+        # uniform component before summation and keeps signed integers small.
+        residual = np.full(m, -1, dtype=np.int64)
+        residual[labels[tuple(points[1:])]] = m - 1
+        denominator = 2 * m
+        for step in range(steps + 1):
+            peak = max(int(residual.max()), -int(residual.min()))
+            if residual.dtype != object and peak * m < 1 << 63:
+                absolute_sum = int(np.abs(residual).sum())
+            else:
+                absolute_sum = sum(abs(int(v)) for v in residual)
+            worst[step] = max(worst[step], Fraction(absolute_sum, denominator))
+            if step == steps:
+                break
+            if residual.dtype != object and peak * q >= 1 << 63:
+                residual = residual.astype(object)
+            updated = np.zeros_like(residual)
+            for previous in predecessors:
+                np.add(updated, residual[previous], out=updated)
+            residual = updated
+            denominator *= q
+    return classes, worst
+
+
+def round_certificate(worst, epsilon, per_step_error=Fraction(0)):
+    """Exact threshold or best bound from repeating a measured shape block."""
+    if not 0 < epsilon < 1:
+        raise ValueError("epsilon must be strictly between zero and one")
+    if not 0 <= per_step_error <= 1:
+        raise ValueError("per-step error must lie in [0,1]")
+    if per_step_error:
+        worst = [min(Fraction(1), d + s * per_step_error) for s, d in enumerate(worst)]
+    for s, value in enumerate(worst):
+        if value <= epsilon:
+            return s + 1, not per_step_error or s == 0
+    best = None
+    for width, delta in enumerate(worst[1:], 1):
+        if 2 * delta >= 1:
+            continue
+        # One exact block, followed by repeated contraction. The final
+        # translation that lifts shapes to tuples is needed just once.
+        blocks = 1
+        remaining = delta
+        while remaining > epsilon:
+            blocks += 1
+            remaining *= 2 * delta
+        rounds = width * blocks + 1
+        if best is None or rounds < best:
+            best = rounds
+    return best, False
+
+
+def universal_rounds(n, exponent, t, security):
+    """A description-only, all-width sufficient bound for error 2**(-security)."""
+    if n < 1 or security < 1:
+        raise ValueError("bits and security bits must be positive")
+    q = 1 << n
+    if not 1 <= t <= q or gcd(exponent, q - 1) != 1:
+        raise ValueError("use a valid tuple order and a power coprime to the group order")
+    if t == 1 or n == 1:
+        return 1
+    d = exponent % (q - 1)
+    if d.bit_count() == 1 or t >= q - 1:
+        return None
+    return (2 * (security + n * t)) << (n * (2 * t + 4))
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    add_table_arguments(parser)
+    mode = parser.add_mutually_exclusive_group(required=True)
+    mode.add_argument("--modulus", type=lambda x: int(x, 0),
+                      help="compute exact short blocks in this binary field")
+    mode.add_argument("--bits", type=int,
+                      help="use the symbolic all-width bound for a field power")
+    parser.add_argument("--exponent", type=int, default=3)
+    parser.add_argument("--order", type=int, default=3)
+    parser.add_argument("--steps", type=int, default=6,
+                        help="number of exact shape steps before block extrapolation")
+    parser.add_argument("--security-bits", nargs="+", type=int, default=[16, 32, 64, 128])
+    args = parser.parse_args()
+    if min(args.security_bits) < 1:
+        parser.error("security bits must be positive")
+    try:
+        supplied = args.images or args.file is not None
+        if args.bits is not None:
+            if supplied:
+                parser.error("supply --modulus to check a truth table")
+            for bits in args.security_bits:
+                rounds = universal_rounds(args.bits, args.exponent, args.order, bits)
+                if rounds is None:
+                    print(f"2^-{bits}: structural obstruction to eventual mixing")
+                else:
+                    print(f"2^-{bits}: {rounds} full rounds (upper bound)")
+            return
+        changes = 0
+        q = 1 << (args.modulus.bit_length() - 1) if args.modulus > 1 else 0
+        if supplied:
+            actual = validated_table(read_table_arguments(parser, args))
+            if q != len(actual):
+                raise ValueError("the field size must match the number of images")
+            reference = field_powers(args.modulus, args.exponent)
+            changes = sum(a != b for a, b in zip(actual, reference))
+        classes, worst = distances(args.modulus, args.exponent, args.order, args.steps)
+        per_step = min(Fraction(1), Fraction(args.order * changes, q))
+        if supplied:
+            print(f"table mismatches {changes}; per-step coupling cost at most {per_step}")
+    except ValueError as exc:
+        parser.error(str(exc))
+    print(f"reference start classes {classes}; reference worst TV at {args.steps+1} full rounds {worst[-1]}")
+    for bits in args.security_bits:
+        rounds, exact = round_certificate(worst, Fraction(1, 1 << bits), per_step)
+        if rounds is None:
+            print(f"2^-{bits}: inconclusive at this block length")
+            continue
+        kind = "exact" if exact else "upper bound"
+        print(f"2^-{bits}: {rounds} full rounds ({kind})")
+
+
+if __name__ == "__main__":
+    main()
