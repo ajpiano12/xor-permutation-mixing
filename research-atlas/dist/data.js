@@ -67,15 +67,15 @@ window.ATLAS = {
       "title": "A checkable four-input construction",
       "status": "Proved",
       "provenance": "Project derivation",
-      "summary": "One specified 128-bit permutation certifies triples in 81 rounds and quadruples in 129 rounds at TV 2⁻¹²⁸.",
+      "summary": "One specified 128-bit permutation certifies triples in 65 rounds and quadruples in 81 rounds at TV 2⁻¹²⁸.",
       "body": [
         "XOR a 16-bit projection of a field inverse into the low block, then rotate. Fresh XOR keys translate the arguments of this same update on every round.",
         "The proof bounds parity biases for the translated update and compares two sweeps with independent switch decisions. At error 2⁻ⁿ the construction needs O(t) rounds for all sufficiently large widths and 2 ≤ t ≤ n/2 − 1, choosing the block width for the desired order."
       ],
-      "attribution": "Thorp shuffles, unbalanced Feistel mixing, nearly independent permutations and character-sum estimates are published. The application using a specific repeated inverse-projection update and the finite constants are project derivations with unverified priority.",
+      "attribution": "Niederreiter and Winterhof proved the exact shifted-inverse character estimate in 2000. The round bound for this specified permutation is a project derivation whose publication priority remains unverified.",
       "resources": [
         {
-          "label": "Construction, two-sweep proof and finite bounds",
+          "label": "Construction, two-sweep proof and 10-round lower bound",
           "href": "library/spectral_certificate.html",
           "kind": "Proof"
         },
@@ -86,9 +86,40 @@ window.ATLAS = {
         }
       ],
       "sourceIds": [
+        "inversive-sums",
         "thorp",
         "feistel",
         "knr"
+      ]
+    },
+    {
+      "id": "polynomial-update",
+      "branch": "precision",
+      "title": "Four inputs with a degree-15 update",
+      "status": "Proved",
+      "provenance": "Project derivation",
+      "summary": "Any degree-15 control polynomial gives an 89-round guarantee on 128 bits at TV 2⁻¹²⁸ with a 12-bit update.",
+      "body": [
+        "XOR 12 bits of the polynomial output into the low block and rotate. Choosing the fifteenth power gives an update with two field multiplications and three squarings.",
+        "A weighted sum of four translates has a surviving coefficient of odd degree. This bounds the correlations among the three relative offsets for a quadruple."
+      ],
+      "attribution": "Makhul and Winterhof give the scalar trace argument. The MiMC paper considers degree 15 for Feistel rounds. The extension to a projected block update and the stated round count are project derivations with unverified priority.",
+      "resources": [
+        {
+          "label": "Polynomial criterion and finite bounds",
+          "href": "library/polynomial_update.html",
+          "kind": "Proof"
+        },
+        {
+          "label": "Compact and table verifier",
+          "href": "library/spectral_certificate.py.html",
+          "kind": "Code"
+        }
+      ],
+      "sourceIds": [
+        "polynomial-shifts",
+        "mimc",
+        "feistel"
       ]
     },
     {
@@ -635,6 +666,11 @@ window.ATLAS = {
           "kind": "Notes"
         },
         {
+          "label": "Closest theorems for four inputs",
+          "href": "library/literature_review.html#prior-work-on-the-explicit-four-input-constructions",
+          "kind": "Notes"
+        },
+        {
           "label": "Detailed rate comparisons",
           "href": "library/rates_and_literature.html",
           "kind": "Notes"
@@ -651,7 +687,11 @@ window.ATLAS = {
         "oc95",
         "ltv",
         "inverse",
-        "layouts"
+        "layouts",
+        "inversive-sums",
+        "polynomial-shifts",
+        "mimc",
+        "guo-feistel"
       ]
     },
     {
@@ -940,6 +980,38 @@ window.ATLAS = {
   ],
   "sources": [
     {
+      "id": "inversive-sums",
+      "title": "Incomplete exponential sums over finite fields and their applications to new inversive pseudorandom number generators",
+      "authors": "Harald Niederreiter and Arne Winterhof",
+      "year": "2000",
+      "url": "https://matwbn.icm.edu.pl/ksiazki/aa/aa93/aa9346.pdf",
+      "note": "Theorem 1 gives the character estimate for arbitrary distinct translated inverses, including the constant."
+    },
+    {
+      "id": "polynomial-shifts",
+      "title": "Normality of the Thue–Morse function for finite fields along polynomial values",
+      "authors": "Mehdi Makhul and Arne Winterhof",
+      "year": "2022",
+      "url": "https://link.springer.com/article/10.1007/s40993-022-00335-8",
+      "note": "Theorem 1 and its Vandermonde proof control the scalar trace at shifted polynomial inputs."
+    },
+    {
+      "id": "mimc",
+      "title": "MiMC: Efficient Encryption and Cryptographic Hashing with Minimal Multiplicative Complexity",
+      "authors": "Martin Albrecht, Lorenzo Grassi, Christian Rechberger, Arnab Roy and Tyge Tiessen",
+      "year": "2016",
+      "url": "https://eprint.iacr.org/2016/492",
+      "note": "Sections 2 and 5.3 treat shifted powers in Feistel rounds and degree 15."
+    },
+    {
+      "id": "guo-feistel",
+      "title": "Understanding the Related-Key Security of Feistel Ciphers from a Provable Perspective",
+      "authors": "Chun Guo",
+      "year": "2019",
+      "url": "https://arxiv.org/abs/1810.07428",
+      "note": "Each balanced Feistel round evaluates the same shifted public ideal function or permutation."
+    },
+    {
       "id": "markov",
       "title": "Markov Ciphers and Differential Cryptanalysis",
       "authors": "Xuejia Lai, James L. Massey and Sean Murphy",
@@ -1117,7 +1189,7 @@ window.ATLAS = {
     }
   ],
   "snapshot": {
-    "date": "2026-11-18",
-    "revision": "eb8ef8173d"
+    "date": "2026-11-19",
+    "revision": "ac626ea68d"
   }
 };

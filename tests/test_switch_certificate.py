@@ -11,8 +11,10 @@ class SwitchCertificateTests(unittest.TestCase):
     def test_compact_and_table_certificates(self):
         p112 = (1 << 112) | 0x39
         p120 = (1 << 120) | 0x1b
-        for t, b, p, expected in ((3, 16, p112, [33, 49, 81]), (4, 16, p112, [33, 65, 129]),
-                                  (8, 8, p120, [65, 129, 225])):
+        for t, b, p, expected in ((3, 16, p112, [17, 33, 65]), (4, 16, p112, [33, 49, 81]),
+                                  (8, 8, p120, [65, 97, 193]),
+                                  (3, 22, (1 << 106) | 0x63, [25, 37, 61]),
+                                  (8, 7, (1 << 121) | 0x123, [77, 115, 191])):
             result = certify(128, b, t, p, [32, 64, 128])
             self.assertEqual(list(result["sufficient_cipher_rounds"].values()), expected)
         self.assertFalse(irreducible(0b10101, 4))  # (x²+x+1)²
@@ -29,6 +31,26 @@ class SwitchCertificateTests(unittest.TestCase):
         blocks = (rounds - 1) // 20
         self.assertLessEqual((2 * delta)**blocks / 2, Fraction(1, 2**127))
         self.assertGreater((2 * delta)**(blocks - 1) / 2, Fraction(1, 2**127))
+
+    def test_final_mask_lifts_the_difference_law_exactly(self):
+        p = (3, 1, 5, 6, 0, 2, 7, 4)
+        size = len(p)
+        difference_states = (size - 1) * (size - 2)
+
+        def tv_from_uniform(counts, states):
+            total = sum(counts.values())
+            return 1 - sum(min(Fraction(count, total), Fraction(1, states))
+                           for count in counts.values())
+
+        for left, right in itertools.permutations(range(1, size), 2):
+            quotient, full = Counter(), Counter()
+            for first_key in range(size):
+                a, b, c = (p[first_key ^ x] for x in (0, left, right))
+                quotient[b ^ a, c ^ a] += 1
+                for last_key in range(size):
+                    full[tuple(p[last_key ^ x] for x in (a, b, c))] += 1
+            self.assertEqual(tv_from_uniform(quotient, difference_states),
+                             tv_from_uniform(full, size * difference_states))
 
     def test_joint_character_bounds_for_inverse_projection(self):
         # Exhaust all differences and nonzero masks for two 2-bit outputs over GF(64).

@@ -1,5 +1,5 @@
 {
-  "reviewed": "2026-11-18",
+  "reviewed": "2026-11-19",
   "branches": [
     {"id":"precision","title":"Small-error guarantees","summary":"Check one public permutation and bound its worst tuple distance at a specified round."},
     {"id":"model","title":"Foundations","summary":"Follow ordered distinct inputs through the same keyed rounds."},
@@ -17,10 +17,17 @@
     },
     {
       "id":"switch-certificate","branch":"precision","title":"A checkable four-input construction","status":"Proved","provenance":"Project derivation",
-      "summary":"One specified 128-bit permutation certifies triples in 81 rounds and quadruples in 129 rounds at TV 2⁻¹²⁸.",
+      "summary":"One specified 128-bit permutation certifies triples in 65 rounds and quadruples in 81 rounds at TV 2⁻¹²⁸.",
       "body":["XOR a 16-bit projection of a field inverse into the low block, then rotate. Fresh XOR keys translate the arguments of this same update on every round.","The proof bounds parity biases for the translated update and compares two sweeps with independent switch decisions. At error 2⁻ⁿ the construction needs O(t) rounds for all sufficiently large widths and 2 ≤ t ≤ n/2 − 1, choosing the block width for the desired order."],
-      "attribution":"Thorp shuffles, unbalanced Feistel mixing, nearly independent permutations and character-sum estimates are published. The application using a specific repeated inverse-projection update and the finite constants are project derivations with unverified priority.",
-      "resources":[{"label":"Construction, two-sweep proof and finite bounds","href":"research/SPECTRAL_CERTIFICATE.md","kind":"Proof"},{"label":"Compact and table verifier","href":"research/spectral_certificate.py","kind":"Code"}],"sourceIds":["thorp","feistel","knr"]
+      "attribution":"Niederreiter and Winterhof proved the exact shifted-inverse character estimate in 2000. The round bound for this specified permutation is a project derivation whose publication priority remains unverified.",
+      "resources":[{"label":"Construction, two-sweep proof and 10-round lower bound","href":"research/SPECTRAL_CERTIFICATE.md","kind":"Proof"},{"label":"Compact and table verifier","href":"research/spectral_certificate.py","kind":"Code"}],"sourceIds":["inversive-sums","thorp","feistel","knr"]
+    },
+    {
+      "id":"polynomial-update","branch":"precision","title":"Four inputs with a degree-15 update","status":"Proved","provenance":"Project derivation",
+      "summary":"Any degree-15 control polynomial gives an 89-round guarantee on 128 bits at TV 2⁻¹²⁸ with a 12-bit update.",
+      "body":["XOR 12 bits of the polynomial output into the low block and rotate. Choosing the fifteenth power gives an update with two field multiplications and three squarings.","A weighted sum of four translates has a surviving coefficient of odd degree. This bounds the correlations among the three relative offsets for a quadruple."],
+      "attribution":"Makhul and Winterhof give the scalar trace argument. The MiMC paper considers degree 15 for Feistel rounds. The extension to a projected block update and the stated round count are project derivations with unverified priority.",
+      "resources":[{"label":"Polynomial criterion and finite bounds","href":"research/POLYNOMIAL_UPDATE.md","kind":"Proof"},{"label":"Compact and table verifier","href":"research/spectral_certificate.py","kind":"Code"}],"sourceIds":["polynomial-shifts","mimc","feistel"]
     },
     {
       "id":"power-precision","branch":"precision","title":"Five rounds for a 128-bit seventh power","status":"Proved","provenance":"Corollary",
@@ -149,7 +156,7 @@
       "summary":"Trace the work from differential Markov chains in 1991 to the recent inverse-walk and SPN papers.",
       "body":["The review identifies which results use the same public table every round, which model the support as a random graph, and which prove a statement for every starting tuple.","Each research question links to its evidence, including exact counts, finite-round certificates and the remaining proof gaps."],
       "attribution":"The cited sources establish the findings attributed to them. Project proofs and measurements have their own entries and priority notes.",
-      "resources":[{"label":"Literature review and open problems","href":"research/LITERATURE_REVIEW.md","kind":"Notes"},{"label":"Detailed rate comparisons","href":"research/RATES_AND_LITERATURE.md","kind":"Notes"},{"label":"Algorithmic literature","href":"research/ALGORITHMIC_PRIOR_ART.md","kind":"Notes"}],"sourceIds":["markov","oc94","oc95","ltv","inverse","layouts"]
+      "resources":[{"label":"Literature review and open problems","href":"research/LITERATURE_REVIEW.md","kind":"Notes"},{"label":"Closest theorems for four inputs","href":"research/LITERATURE_REVIEW.md#prior-work-on-the-explicit-four-input-constructions","kind":"Notes"},{"label":"Detailed rate comparisons","href":"research/RATES_AND_LITERATURE.md","kind":"Notes"},{"label":"Algorithmic literature","href":"research/ALGORITHMIC_PRIOR_ART.md","kind":"Notes"}],"sourceIds":["markov","oc94","oc95","ltv","inverse","layouts","inversive-sums","polynomial-shifts","mimc","guo-feistel"]
     },
     {
       "id":"typical-rate","branch":"counts","title":"Three rounds for typical pairs","status":"Proved","provenance":"Project derivation",
@@ -216,6 +223,10 @@
     }
   ],
   "sources": [
+    {"id":"inversive-sums","title":"Incomplete exponential sums over finite fields and their applications to new inversive pseudorandom number generators","authors":"Harald Niederreiter and Arne Winterhof","year":"2000","url":"https://matwbn.icm.edu.pl/ksiazki/aa/aa93/aa9346.pdf","note":"Theorem 1 gives the character estimate for arbitrary distinct translated inverses, including the constant."},
+    {"id":"polynomial-shifts","title":"Normality of the Thue–Morse function for finite fields along polynomial values","authors":"Mehdi Makhul and Arne Winterhof","year":"2022","url":"https://link.springer.com/article/10.1007/s40993-022-00335-8","note":"Theorem 1 and its Vandermonde proof control the scalar trace at shifted polynomial inputs."},
+    {"id":"mimc","title":"MiMC: Efficient Encryption and Cryptographic Hashing with Minimal Multiplicative Complexity","authors":"Martin Albrecht, Lorenzo Grassi, Christian Rechberger, Arnab Roy and Tyge Tiessen","year":"2016","url":"https://eprint.iacr.org/2016/492","note":"Sections 2 and 5.3 treat shifted powers in Feistel rounds and degree 15."},
+    {"id":"guo-feistel","title":"Understanding the Related-Key Security of Feistel Ciphers from a Provable Perspective","authors":"Chun Guo","year":"2019","url":"https://arxiv.org/abs/1810.07428","note":"Each balanced Feistel round evaluates the same shifted public ideal function or permutation."},
     {"id":"markov","title":"Markov Ciphers and Differential Cryptanalysis","authors":"Xuejia Lai, James L. Massey and Sean Murphy","year":"1991","url":"https://doi.org/10.1007/3-540-46416-6_2","note":"Introduces the Markov-chain framework for round differences under independent keys."},
     {"id":"ltv","title":"The t-wise Independence of Substitution-Permutation Networks","authors":"Tianren Liu, Stefano Tessaro and Vinod Vaikuntanathan","year":"2021","url":"https://eprint.iacr.org/2021/507","note":"Published bounds for SPNs and key-alternating ciphers. The paper’s round assumptions and inverse benchmark are recorded in the corresponding notes."},
     {"id":"inverse","title":"How Fast Does the Inverse Walk Approximate a Random Permutation?","authors":"Vishesh Jain, Tianren Liu, Clayton Mizgerd, Angelos Pelecanos, Stefano Tessaro and Vinod Vaikuntanathan","year":"2026","url":"https://doi.org/10.1007/978-3-032-35412-9_9","note":"Published at CRYPTO 2026 after a 2024 ePrint. Gives inverse-walk convergence bounds and a four-wise lower bound."},

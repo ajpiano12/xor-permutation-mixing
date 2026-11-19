@@ -28,7 +28,7 @@ DOCUMENTS = (
     "research/QUADRATIC_CERTIFICATE.md", "research/TRIPLE_ROUNDS.md",
     "research/TRIPLE_MOMENT.md", "research/TRIPLE_LOWER.md", "research/INVERSE_TRIPLE_RATE.md",
     "research/BRIEF_AND_PROGRESS.md", "research/POWER_CERTIFICATE.md", "research/STRUCTURED_SMALL_ERROR.md",
-    "research/SPECTRAL_CERTIFICATE.md", "research/SMALL_ERROR_DATA.md",
+    "research/SPECTRAL_CERTIFICATE.md", "research/POLYNOMIAL_UPDATE.md", "research/SMALL_ERROR_DATA.md",
 )
 PROGRAMS = ("mixing.py", "exact_four_bit.py", "four_bit_obstructions.py", "sample_four_bit.py",
             "verify_rate_bins.py", "classify_mixing.py", "fast_mixing.py", "parallel_mixing.c", "parity_screen.py",
