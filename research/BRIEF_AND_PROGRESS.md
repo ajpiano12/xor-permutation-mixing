@@ -2,7 +2,7 @@
 
 Page 5 of the project brief fixes **one public permutation** $P$ and draws a fresh uniform $n$-bit XOR key for each round. The target is the largest total variation distance over **all ordered distinct input tuples**. It asks for a simple condition on a given $P$ and an explicit round count, first for pairs and then, if possible, for three or more inputs. It welcomes restricted families. The brief sets no numerical error threshold. Our main finite benchmark is $2^{-128}$, with $2^{-32}$ and $2^{-64}$ as intermediate measurements. We also study $\epsilon=2^{-n}$ as the width grows.
 
-The three-page illustrated brief explains the common-key model, the **10–36** round interval on four inputs, and how to use a speed estimate on a small table. [Download the brief](../results/progress-brief.pdf)
+The illustrated brief starts with two three-bit messages. Following their outputs explains what mixing means, how we estimate the wait on a small table, and why two 128-bit rules can take radically different numbers of rounds on the same four-message test. [Download the brief](../results/progress-brief.pdf)
 
 ## Which ideas answer the question?
 
